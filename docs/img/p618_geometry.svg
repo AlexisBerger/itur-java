@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 330" font-family="DejaVu Sans, sans-serif" font-size="13">
+<rect width="640" height="330" fill="#fcfcfb"/>
+<rect x="20" y="270" width="600" height="30" fill="#cde2fb"/>
+<text x="30" y="290" fill="#52514e">mean sea level</text>
+<path d="M20 270 Q120 255 200 262 L260 262 L260 270 Z" fill="#9ec5f4"/>
+<line x1="20" y1="60" x2="620" y2="60" stroke="#2a78d6" stroke-dasharray="6 4" stroke-width="1.5"/>
+<text x="30" y="50" fill="#184f95">rain height h_R (P.839)</text>
+<line x1="260" y1="262" x2="500" y2="60" stroke="#eb6834" stroke-width="2.5"/>
+<line x1="260" y1="262" x2="500" y2="262" stroke="#0b0b0b" stroke-width="1.5"/>
+<path d="M300 262 A40 40 0 0 0 292 232" fill="none" stroke="#0b0b0b"/>
+<text x="305" y="252" fill="#0b0b0b">θ</text>
+<line x1="500" y1="60" x2="500" y2="262" stroke="#52514e" stroke-dasharray="3 3"/>
+<rect x="250" y="262" width="20" height="8" fill="#0b0b0b"/>
+<text x="215" y="322" fill="#0b0b0b">station (h_s, P.1511)</text>
+<text x="285" y="170" fill="#eb6834" transform="rotate(-40 285 170)">slant path L_s = (h_R − h_s)/sin θ</text>
+<text x="330" y="250" fill="#0b0b0b">horizontal projection L_G = L_s·cos θ</text>
+<text x="508" y="170" fill="#52514e">h_R − h_s</text>
+<text x="520" y="80" fill="#0b0b0b">satellite →</text>
+</svg>

@@ -31,6 +31,14 @@ Java implementation (Java 25 target, no runtime dependencies) of ITU-R radiowave
 
 `Itur.atmosphericAttenuationSlantPath(...)` combines gases, clouds, rain and scintillation (`A = Ag + sqrt((Ar+Ac)² + As²)`).
 
+## Documentation
+
+One page per recommendation, with equations, API, worked examples and figures computed from this library: [docs/recommendations/](docs/recommendations/README.md). Also [validation](docs/VALIDATION.md) and [performance](docs/PERFORMANCE.md).
+
+| Pages | |
+|---|---|
+| [P.618](docs/recommendations/P618.md) · [P.676](docs/recommendations/P676.md) · [P.837](docs/recommendations/P837.md) · [P.838](docs/recommendations/P838.md) · [P.839](docs/recommendations/P839.md) · [P.840](docs/recommendations/P840.md) | [P.453](docs/recommendations/P453.md) · [P.836](docs/recommendations/P836.md) · [P.1510](docs/recommendations/P1510.md) · [P.1511](docs/recommendations/P1511.md) · [P.835](docs/recommendations/P835.md) · [Combined](docs/recommendations/ITUR.md) |
+
 ## Quick start
 
 ```java
@@ -82,6 +90,8 @@ mvn test
 ```
 
 Not built with Maven/Java 25 in the development environment (network blocked): validated with javac 21, a hand-assembled jar and a small JUnit stand-in runner. A first `mvn test` on your side is the final check.
+
+Regenerate the documentation figures: `java -cp target/classes tools/DocFigureData.java build/doc-data && python3 tools/plot_doc_figures.py build/doc-data docs/img` (needs matplotlib, pandas).
 
 Benchmark (not run by `mvn test`): `java -Xmx2g -cp target/classes:target/test-classes org.itur.perf.PerformanceBenchmark [--quick] [--markdown]`; ITU-Rpy comparison: `tools/benchmark_itur_rpy.py`.
 
