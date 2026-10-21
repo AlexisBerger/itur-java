@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Convert the ITU-Rpy ``itur/data`` (.npz / .txt) files used by this library into the
-compact ``.grid`` format read by ``org.itur.Grid``.
+compact ``.grid`` format read by ``org.itur.grid.Grid``.
 
 Usage:  python3 tools/convert_data.py <path-to-ITU-Rpy>/itur/data  src/main/resources/itur/data
 
