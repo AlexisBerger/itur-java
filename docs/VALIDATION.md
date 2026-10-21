@@ -44,10 +44,14 @@ The tables are small spreadsheets published with each recommendation (inputs and
 expected outputs). The pass criterion is the one used by ITU-Rpy's test suite: absolute error
 below 5e-6 (five decimal places).
 
-- `P676OfficialTablesTest` runs the P.676-13 tables as part of `mvn test` (the tables are in
-  `src/test/resources/official/676`).
-- The other recommendations were checked once with a throw-away runner against the same kind of
-  tables; that runner is not part of the repository.
+- `P676OfficialTablesTest` runs the P.676-13 tables as part of `mvn test`.
+- `OfficialTablesTest` runs the tables of all the other recommendations (P.453, P.618, P.836, P.837,
+  P.838, P.839, P.840, P.1510, P.1511) as part of `mvn test`. The tables are in
+  `src/test/resources/official/<recommendation>`; `OfficialTable` reads them. Two tables use a
+  documented, looser tolerance (see "Known differences"): P.837-7 for p ≠ 0.01 % (relative 5e-4)
+  and P.1510-1 (absolute 2e-5).
+- The P.618-13 total-attenuation table is used for its rain and scintillation columns (all rows)
+  and its cloud column (rows with p ≥ 1 %); see "What is not validated".
 
 ## Results
 
@@ -110,8 +114,11 @@ relies on numerical integration.
 
 ## What is not validated
 
-- **Total attenuation against an ITU table.** The P.618-13 total-attenuation table includes gases
-  computed with P.676-12, which differs from the P.676-13 implemented here, so it cannot be used.
+- **Total attenuation and gas column against an ITU table.** The P.618-13 total-attenuation table
+  includes gases computed with P.676-12, which differs from the P.676-13 implemented here (by up
+  to about 1e-2 dB), so its gas and total columns cannot be used. Its cloud column uses the
+  exceedance probability itself below 1 %, where this library uses max(1, p) as P.618 prescribes
+  for gases and clouds, so only the rows with p ≥ 1 % are compared.
 - **Site diversity** has no table in the available data; it is compared with ITU-Rpy only.
 - **Maven and Java 25.** The development environment had no access to Maven Central and only a
   Java 21 compiler: the code was compiled with `javac 21 --release 21`, and the JUnit tests were
@@ -123,7 +130,7 @@ relies on numerical integration.
 ## Reproducing
 
 ```
-# unit tests, golden vectors and the P.676-13 official tables
+# unit tests, golden vectors and the official tables
 mvn test
 
 # different golden tolerance

@@ -66,8 +66,7 @@ The ITU data is subject to the ITU's terms of use.
 See [docs/VALIDATION.md](docs/VALIDATION.md) for the strategy, the full results and the known differences. In short:
 
 - 11,143 golden vectors (cities, random points, boundary points: poles, ±180°, 360°) compared with ITU-Rpy at a relative tolerance of 1e-9: all pass, worst error ≤ 1e-11 except the P.618 quantile functions (≤ 2.4e-7, tolerance 2e-5).
-- P.676-13 is also checked against the official ITU tables (`P676OfficialTablesTest`): γ0/γw/γ (350 rows), Annex 2 A_gas (10 rows) and the Annex 1 sheet (28 GHz, 30°), all within 5e-6.
-- The other recommendations were checked once against the ITU tables: all rows pass except P.837-7 rainfall rate for arbitrary `p` (up to 3.4e-4 relative, same as ITU-Rpy) and P.1510-1 temperature (≤ 1.3e-5 K, float32 storage).
+- All the recommendations are checked against the official ITU tables as part of `mvn test` (`P676OfficialTablesTest`, `OfficialTablesTest`): within 5e-6, except P.837-7 for p ≠ 0.01 % and P.1510-1 (documented tolerances).
 - The maps are rounded to float32 on both sides so that the same inputs are compared; `ReferenceValuesTest` checks float64 values at 1e-5.
 
 ## Performance
