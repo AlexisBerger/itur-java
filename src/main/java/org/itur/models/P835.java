@@ -1,5 +1,7 @@
 package org.itur.models;
 
+import org.itur.util.Check;
+
 /**
  * Recommendation ITU-R P.835-6 (12/2017), Annex 1: reference standard atmosphere
  * (temperature, pressure and water-vapour profiles as a function of geometric height).
@@ -22,6 +24,7 @@ public final class P835 {
      * @return temperature (K)
      */
     public static double standardTemperature(double hKm) {
+        Check.finite("height (km)", hKm);
         double hp = geopotential(hKm);
         if (hp <= 11) {
             return 288.15 - 6.5 * hp;
@@ -53,6 +56,7 @@ public final class P835 {
      * @return total pressure (hPa)
      */
     public static double standardPressure(double hKm) {
+        Check.finite("height (km)", hKm);
         double hp = geopotential(hKm);
         if (hp <= 11) {
             return 1013.25 * Math.pow(288.15 / (288.15 - 6.5 * hp), -34.1632 / 6.5);
@@ -95,6 +99,9 @@ public final class P835 {
      * @return water vapour density (g/m3)
      */
     public static double standardWaterVapourDensity(double hKm, double h0Km, double rho0) {
+        Check.finite("height (km)", hKm);
+        Check.positive("scale height (km)", h0Km);
+        Check.nonNegative("sea-level density (g/m3)", rho0);
         return rho0 * Math.exp(-hKm / h0Km);
     }
 
@@ -108,6 +115,7 @@ public final class P835 {
      * @return water vapour partial pressure (hPa)
      */
     public static double standardWaterVapourPressure(double hKm, double h0Km, double rho0) {
+        Check.finite("height (km)", hKm);
         double rho = standardWaterVapourDensity(hKm, h0Km, rho0);
         return rho * standardTemperature(hKm) / 216.7;
     }

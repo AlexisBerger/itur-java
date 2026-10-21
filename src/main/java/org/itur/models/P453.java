@@ -1,6 +1,7 @@
 package org.itur.models;
 
 import org.itur.grid.Grid;
+import org.itur.util.Check;
 import org.itur.util.Special;
 
 /**
@@ -39,6 +40,8 @@ public final class P453 {
      * @return wet term of the radio refractivity (N-units)
      */
     public static double wetTermRadioRefractivity(double eHPa, double tCelsius) {
+        Check.nonNegative("water vapour pressure (hPa)", eHPa);
+        Check.celsius(tCelsius);
         double tk = tCelsius + 273.15;
         return 72 * eHPa / tk + 3.75e5 * eHPa / (tk * tk);
     }
@@ -51,6 +54,8 @@ public final class P453 {
      * @return dry term of the radio refractivity (N-units)
      */
     public static double dryTermRadioRefractivity(double pdHPa, double tKelvin) {
+        Check.nonNegative("dry air pressure (hPa)", pdHPa);
+        Check.kelvin(tKelvin);
         return 77.6 * pdHPa / tKelvin;
     }
 
@@ -63,6 +68,9 @@ public final class P453 {
      * @return radio refractive index (dimensionless)
      */
     public static double radioRefractiveIndex(double pdHPa, double eHPa, double tKelvin) {
+        Check.nonNegative("dry air pressure (hPa)", pdHPa);
+        Check.nonNegative("water vapour pressure (hPa)", eHPa);
+        Check.kelvin(tKelvin);
         double n = 77.6 * pdHPa / tKelvin + 72 * eHPa / tKelvin + 3.75e5 * eHPa / (tKelvin * tKelvin);
         return 1 + n * 1e-6;
     }
@@ -76,6 +84,9 @@ public final class P453 {
      * @return saturation vapour pressure (hPa)
      */
     public static double saturationVapourPressure(double tCelsius, double pHPa, Hydrometeor type) {
+        Check.celsius(tCelsius);
+        Check.positive("total pressure (hPa)", pHPa);
+        java.util.Objects.requireNonNull(type, "type");
         double t = tCelsius;
         double ef;
         double a;
@@ -108,6 +119,7 @@ public final class P453 {
      * @return water vapour partial pressure (hPa)
      */
     public static double waterVapourPressure(double tCelsius, double pHPa, double hPercent, Hydrometeor type) {
+        Check.humidity(hPercent);
         return hPercent * saturationVapourPressure(tCelsius, pHPa, type) / 100;
     }
 
@@ -144,6 +156,8 @@ public final class P453 {
      * @return wet term of the surface radio refractivity (N-units)
      */
     public static double mapWetTermRadioRefractivity(double latDeg, double lonDeg, double p) {
+        Check.position(latDeg, lonDeg);
+        Check.probability(p);
         double lon = Special.mod(lonDeg, 360);
         if (lon > 180) {
             lon -= 360;
@@ -212,6 +226,7 @@ public final class P453 {
      * @return refractivity gradient (N-units/km)
      */
     public static double dn65(double latDeg, double lonDeg, double p) {
+        Check.position(latDeg, lonDeg);
         return dnMap("dn65m", latDeg, lonDeg, p);
     }
 
@@ -225,6 +240,7 @@ public final class P453 {
      * @return refractivity gradient (N-units/km)
      */
     public static double dn1(double latDeg, double lonDeg, double p) {
+        Check.position(latDeg, lonDeg);
         return dnMap("dn", latDeg, lonDeg, p);
     }
 }

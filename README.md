@@ -51,6 +51,8 @@ System.out.println(a.total() + " dB");
 Runnable example: `java -cp target/classes examples/LinkBudgetExample.java`
 (Paris, 20 GHz, 35°, p = 0.1 %, 1.2 m dish: gases 0.95; clouds 0.78; rain 4.14; scintillation 0.45; total 5.89 dB).
 
+Invalid arguments (NaN, latitude beyond 90°, non-positive frequency, elevation outside ]0°, 90°] for a slant path, probability outside ]0, 100] %, negative rainfall rate, ...) throw an `IllegalArgumentException` naming the argument and the accepted range; a location outside a map gives `NaN`, as in ITU-Rpy.
+
 Conventions: latitude/longitude in degrees, frequency in GHz, heights in km, probabilities `p` in %, scalar API, nullable `Double` = optional value (derived from the ITU maps when `null`).
 
 ## Data
@@ -77,7 +79,7 @@ A typical total-attenuation computation takes about 13 µs per call and per core
 
 - `P0` of P.618 is in %.
 - P.453 wet term: temperature in °C.
-- `NaN` at the grid limits (e.g. lat = -90° for P.836/P.453), as in ITU-Rpy.
+- `NaN` at the grid limits (e.g. lat = -90° for P.836/P.453), as in ITU-Rpy; `NaN` *arguments* are rejected.
 - P.840: error for p > 99 %; P.840-7 has no lognormal attenuation.
 - P.835: reference standard atmosphere only.
 - P.676-13: no explicit approximation of γ0/γw; `gamma0Approx`/`gammaWApprox` (deprecated) return the total line-by-line γ, as ITU-Rpy does; the `APPROX`/`EXACT` modes of the terrestrial path are therefore identical.

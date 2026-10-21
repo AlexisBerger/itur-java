@@ -7,6 +7,7 @@ import org.itur.models.P676;
 import org.itur.models.P835;
 import org.itur.models.P836;
 import org.itur.models.P840;
+import org.itur.util.Check;
 
 /**
  * Total atmospheric attenuation of an Earth-space path, combining gases (P.676-13), clouds (P.840-7),
@@ -57,6 +58,26 @@ public final class Itur {
     public record Options(Double hsKm, Double rhoGPerM3, Double r001MmPerHour, Double tKelvin, Double hPercent,
                           Double pHPa, Double lsKm, Double vtKgPerM2, double eta, double hLMeters, double tauDeg,
                           P676.Mode gasMode, boolean rain, boolean gas, boolean scintillation, boolean clouds) {
+
+        /** Checks the values that were given; {@code null} stays "derive from the maps". */
+        public Options {
+            Check.optionalFinite("station altitude (km)", hsKm);
+            Check.optionalNonNegative("water vapour density (g/m3)", rhoGPerM3);
+            Check.optionalNonNegative("rainfall rate R0.01 (mm/h)", r001MmPerHour);
+            if (tKelvin != null) {
+                Check.kelvin(tKelvin);
+            }
+            if (hPercent != null) {
+                Check.humidity(hPercent);
+            }
+            Check.optionalPositive("pressure (hPa)", pHPa);
+            Check.optionalNonNegative("slant path length (km)", lsKm);
+            Check.optionalPositive("water vapour content (kg/m2)", vtKgPerM2);
+            Check.range("antenna efficiency", eta, Math.nextUp(0.0), 1);
+            Check.positive("height of the turbulent layer (m)", hLMeters);
+            Check.finite("polarization tilt angle (degrees)", tauDeg);
+            java.util.Objects.requireNonNull(gasMode, "gasMode");
+        }
 
         /**
          * Default options: everything derived from the maps, all contributions included.
@@ -275,6 +296,12 @@ public final class Itur {
     public static Attenuation atmosphericAttenuationSlantPath(double latDeg, double lonDeg, double fGHz,
                                                               double elDeg, double p, double dMeters,
                                                               Options o) {
+        Check.position(latDeg, lonDeg);
+        Check.frequency(fGHz);
+        Check.slantElevation(elDeg);
+        Check.probability(p);
+        Check.positive("antenna diameter (m)", dMeters);
+        java.util.Objects.requireNonNull(o, "options");
         double pCg = Math.max(1, p);
         double hs = o.hsKm() != null ? o.hsKm() : P1511.topographicAltitude(latDeg, lonDeg);
         double t = o.tKelvin() != null ? o.tKelvin() : P1510.surfaceMeanTemperature(latDeg, lonDeg);
@@ -285,7 +312,11 @@ public final class Itur {
 
         double ar = o.rain() ? P618.rainAttenuation(latDeg, lonDeg, fGHz, elDeg, hs, p, o.r001MmPerHour(),
             o.tauDeg(), o.lsKm()) : 0;
-        double ag = o.gas() ? P676.gaseousAttenuationSlantPath(fGHz, elDeg, rho, pressure, t, vt, hs, o.gasMode()) : 0;
+        // a location outside a map gives NaN, as in ITU-Rpy (the models reject NaN arguments)
+        boolean gasInputsMissing = Double.isNaN(rho) || Double.isNaN(pressure) || Double.isNaN(t)
+            || (o.gasMode() == P676.Mode.APPROX && (Double.isNaN(vt) || Double.isNaN(hs)));
+        double ag = !o.gas() ? 0 : gasInputsMissing ? Double.NaN
+            : P676.gaseousAttenuationSlantPath(fGHz, elDeg, rho, pressure, t, vt, hs, o.gasMode());
         double ac = o.clouds() ? P840.cloudAttenuation(latDeg, lonDeg, elDeg, fGHz, pCg, null) : 0;
         double as = o.scintillation()
             ? P618.scintillationAttenuation(latDeg, lonDeg, fGHz, elDeg, p, dMeters, o.eta(), t - 273.15,

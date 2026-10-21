@@ -1,6 +1,7 @@
 package org.itur.models;
 
 import org.itur.grid.Grid;
+import org.itur.util.Check;
 import org.itur.util.Special;
 
 /**
@@ -41,6 +42,8 @@ public final class P840 {
      * @throws IllegalArgumentException if {@code p} is greater than 99
      */
     public static double columnarContentReducedLiquid(double latDeg, double lonDeg, double p) {
+        Check.position(latDeg, lonDeg);
+        Check.probability(p);
         double lon = Special.mod(lonDeg, 360);
         int exact = -1;
         for (int i = 0; i < AVAILABLE_P.length; i++) {
@@ -71,6 +74,8 @@ public final class P840 {
      * @return specific attenuation coefficient K_l ((dB/km)/(g/m3))
      */
     public static double specificAttenuationCoefficient(double fGHz, double tCelsius) {
+        Check.frequency(fGHz);
+        Check.celsius(tCelsius);
         if (fGHz > 1000) {
             throw new IllegalArgumentException("Frequency must be given in GHz, maximum 1000 GHz");
         }
@@ -103,6 +108,11 @@ public final class P840 {
      */
     public static double cloudAttenuation(double latDeg, double lonDeg, double elDeg, double fGHz, double p,
                                           Double lredKgPerM2) {
+        Check.position(latDeg, lonDeg);
+        Check.slantElevation(elDeg);
+        Check.frequency(fGHz);
+        Check.probability(p);
+        Check.optionalNonNegative("reduced liquid water content (kg/m2)", lredKgPerM2);
         double kl = specificAttenuationCoefficient(fGHz, 0);
         double lred = lredKgPerM2 != null ? lredKgPerM2 : columnarContentReducedLiquid(latDeg, lonDeg, p);
         double a = lred * kl / Math.sin(Math.toRadians(elDeg));
@@ -117,6 +127,7 @@ public final class P840 {
      * @return the coefficients of the log-normal approximation
      */
     public static LognormalCoefficients lognormalApproximationCoefficients(double latDeg, double lonDeg) {
+        Check.position(latDeg, lonDeg);
         double lon = Special.mod(lonDeg, 360);
         return new LognormalCoefficients(
             Grid.load("840/v7_m").bilinear(latDeg, lon),

@@ -1,6 +1,7 @@
 package org.itur.models;
 
 import org.itur.grid.Grid;
+import org.itur.util.Check;
 import org.itur.util.Special;
 
 /**
@@ -21,6 +22,7 @@ public final class P1511 {
      * @return topographic altitude above mean sea level (km)
      */
     public static double topographicAltitude(double latDeg, double lonDeg) {
+        Check.position(latDeg, lonDeg);
         double lon = Special.mod(lonDeg, 360);
         double val = Grid.load("1511/v1_topo_0dot5").bicubic(latDeg, lon);
         return Math.max(val, 1e-9);

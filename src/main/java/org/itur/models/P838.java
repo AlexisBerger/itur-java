@@ -1,5 +1,7 @@
 package org.itur.models;
 
+import org.itur.util.Check;
+
 /**
  * Recommendation ITU-R P.838-3 (03/2005): specific attenuation model for rain for use in
  * prediction methods.
@@ -60,6 +62,9 @@ public final class P838 {
      * @return the coefficients {@code k} and {@code alpha}
      */
     public static Coefficients coefficients(double fGHz, double elDeg, double tauDeg) {
+        Check.range("frequency (GHz)", fGHz, 1, 1000);
+        Check.range("elevation angle (degrees)", elDeg, -90, 90);
+        Check.finite("polarization tilt angle (degrees)", tauDeg);
         double lf = Math.log10(fGHz);
         double kh = Math.pow(10, sumGauss(KH_A, KH_B, KH_C, lf) + KH_M * lf + KH_CK);
         double kv = Math.pow(10, sumGauss(KV_A, KV_B, KV_C, lf) + KV_M * lf + KV_CK);
@@ -83,6 +88,7 @@ public final class P838 {
      * @return specific attenuation due to rain (dB/km)
      */
     public static double rainSpecificAttenuation(double rMmPerHour, double fGHz, double elDeg, double tauDeg) {
+        Check.nonNegative("rainfall rate (mm/h)", rMmPerHour);
         Coefficients c = coefficients(fGHz, elDeg, tauDeg);
         return c.k() * Math.pow(rMmPerHour, c.alpha());
     }

@@ -1,6 +1,7 @@
 package org.itur.models;
 
 import org.itur.grid.Grid;
+import org.itur.util.Check;
 import org.itur.util.Special;
 
 /**
@@ -61,6 +62,7 @@ public final class P837 {
      * @return probability of rain (%)
      */
     public static double rainfallProbability(double latDeg, double lonDeg) {
+        Check.position(latDeg, lonDeg);
         return monthly(latDeg, lonDeg).annualP0();
     }
 
@@ -75,6 +77,8 @@ public final class P837 {
      * @return rainfall rate (mm/h)
      */
     public static double rainfallRate(double latDeg, double lonDeg, double p) {
+        Check.position(latDeg, lonDeg);
+        Check.probability(p);
         if (p == 0.01) {
             return r001(latDeg, lonDeg);
         }
@@ -101,8 +105,16 @@ public final class P837 {
      * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
      * @param rMmPerHour rainfall rate threshold (mm/h)
      * @return percentage of time the rate is exceeded (%)
+     * @throws IllegalArgumentException if the rate is larger than the rate exceeded for 1e-5 % of the time
      */
     public static double unavailabilityFromRainfallRate(double latDeg, double lonDeg, double rMmPerHour) {
-        return Special.bisect(x -> rainfallRate(latDeg, lonDeg, x) - rMmPerHour - 1e-6, 1e-5, 100, 2e-12, 50);
+        Check.position(latDeg, lonDeg);
+        Check.nonNegative("rainfall rate (mm/h)", rMmPerHour);
+        try {
+            return Special.bisect(x -> rainfallRate(latDeg, lonDeg, x) - rMmPerHour - 1e-6, 1e-5, 100, 2e-12, 50);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("rainfall rate " + rMmPerHour + " mm/h is outside the range the model"
+                + " gives for exceedance probabilities from 1e-5 % to 100 % at this location", e);
+        }
     }
 }

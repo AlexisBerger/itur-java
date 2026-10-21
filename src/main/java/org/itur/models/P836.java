@@ -1,6 +1,7 @@
 package org.itur.models;
 
 import org.itur.grid.Grid;
+import org.itur.util.Check;
 import org.itur.util.Special;
 
 /**
@@ -102,6 +103,9 @@ public final class P836 {
      * @return surface water vapour density (g/m3)
      */
     public static double surfaceWaterVapourDensity(double latDeg, double lonDeg, double p, Double altKm) {
+        Check.position(latDeg, lonDeg);
+        Check.probability(p);
+        Check.optionalFinite("altitude (km)", altKm);
         return interpolate("rho", latDeg, lonDeg, p, altKm);
     }
 
@@ -115,6 +119,9 @@ public final class P836 {
      * @return total water vapour content (kg/m2)
      */
     public static double totalWaterVapourContent(double latDeg, double lonDeg, double p, Double altKm) {
+        Check.position(latDeg, lonDeg);
+        Check.probability(p);
+        Check.optionalFinite("altitude (km)", altKm);
         return interpolate("v", latDeg, lonDeg, p, altKm);
     }
 }

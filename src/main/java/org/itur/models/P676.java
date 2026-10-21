@@ -8,6 +8,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import org.itur.util.Check;
 
 /**
  * Recommendation ITU-R P.676-13 (08/2022): attenuation by atmospheric gases. Provides the
@@ -98,6 +99,10 @@ public final class P676 {
      * @return specific attenuation of dry air (dB/km)
      */
     public static double gamma0Exact(double fGHz, double pHPa, double rho, double tKelvin) {
+        Check.frequency(fGHz);
+        Check.positive("total pressure (hPa)", pHPa);
+        Check.nonNegative("water vapour density (g/m3)", rho);
+        Check.kelvin(tKelvin);
         double theta = 300 / tKelvin;
         double e = rho * tKelvin / 216.7;
         double sum = 0;
@@ -127,6 +132,10 @@ public final class P676 {
      * @return specific attenuation of water vapour (dB/km)
      */
     public static double gammaWExact(double fGHz, double pHPa, double rho, double tKelvin) {
+        Check.frequency(fGHz);
+        Check.positive("total pressure (hPa)", pHPa);
+        Check.nonNegative("water vapour density (g/m3)", rho);
+        Check.kelvin(tKelvin);
         double theta = 300 / tKelvin;
         double e = rho * tKelvin / 216.7;
         double sum = 0;
@@ -233,6 +242,10 @@ public final class P676 {
      */
     public static Heights slantInclinedPathEquivalentHeight(double fGHz, double pHPa, double rho,
                                                             double tKelvin) {
+        Check.frequency(fGHz);
+        Check.positive("total pressure (hPa)", pHPa);
+        Check.nonNegative("water vapour density (g/m3)", rho);
+        Check.kelvin(tKelvin);
         double e = rho * tKelvin / 216.7;
         double ps = pHPa + e;
         double h0 = interp(fGHz, 1) + interp(fGHz, 2) * tKelvin + interp(fGHz, 3) * ps + interp(fGHz, 4) * rho;
@@ -256,18 +269,30 @@ public final class P676 {
      */
     public static double zenithWaterVapourAttenuation(double latDeg, double lonDeg, double p, double fGHz,
                                                      Double vtKgPerM2, Double hKm) {
-        final double fRef = 20.6;
-        final double pRef = 845;
+        Check.position(latDeg, lonDeg);
+        Check.probability(p);
+        Check.frequency(fGHz);
+        Check.optionalPositive("water vapour content (kg/m2)", vtKgPerM2);
+        Check.optionalFinite("station altitude (km)", hKm);
         double h = hKm != null ? hKm : P1511.topographicAltitude(latDeg, lonDeg);
         double vt = vtKgPerM2 != null ? vtKgPerM2 : P836.totalWaterVapourContent(latDeg, lonDeg, p, h);
+        return zenithFromContent(fGHz, vt, h);
+    }
+
+    /** Annex 2 zenith water vapour attenuation from an integrated water vapour content (arguments checked). */
+    private static double zenithFromContent(double f, double vt, double hKm) {
+        final double fRef = 20.6;
+        final double pRef = 845;
+        if (Double.isNaN(vt)) {
+            return Double.NaN; // location outside the P.836 map
+        }
         double rhoRef = vt / 2.38;
         double tRef = 14 * Math.log(0.22 * vt / 2.38) + 3;
-        double f = fGHz;
         double a = 0.2048 * Math.exp(-Math.pow((f - 22.43) / 3.097, 2))
             + 0.2326 * Math.exp(-Math.pow((f - 183.5) / 4.096, 2))
             + 0.2073 * Math.exp(-Math.pow((f - 325) / 3.651, 2)) - 0.1113;
         double b = 8.741e4 * Math.exp(-0.587 * f) + 312.2 * Math.pow(f, -2.38) + 0.723;
-        h = Math.max(0, Math.min(h, 4));
+        double h = Math.max(0, Math.min(hKm, 4));
         double term1 = 0.0176 * vt * gammaWExact(f, pRef, rhoRef, tRef + 273.15)
             / gammaWExact(fRef, pRef, rhoRef, tRef + 273.15);
         return f < 20 ? term1 : term1 * (a * Math.pow(h, b) + 1);
@@ -290,6 +315,12 @@ public final class P676 {
      */
     public static double gaseousAttenuationTerrestrialPath(double rKm, double fGHz, double elDeg, double rho,
                                                            double pHPa, double tKelvin, Mode mode) {
+        Check.nonNegative("path length (km)", rKm);
+        Check.frequency(fGHz);
+        Check.positive("total pressure (hPa)", pHPa);
+        Check.nonNegative("water vapour density (g/m3)", rho);
+        Check.kelvin(tKelvin);
+        java.util.Objects.requireNonNull(mode, "mode");
         // P.676-13 has no separate approximation: both modes use the line-by-line method
         return gammaExact(fGHz, pHPa, rho, tKelvin) * rKm;
     }
@@ -310,13 +341,21 @@ public final class P676 {
      */
     public static double gaseousAttenuationSlantPath(double fGHz, double elDeg, double rho, double pHPa,
                                                      double tKelvin, Double vtKgPerM2, Double hKm, Mode mode) {
+        Check.slantElevation(elDeg);
+        Check.frequency(fGHz);
+        Check.positive("total pressure (hPa)", pHPa);
+        Check.nonNegative("water vapour density (g/m3)", rho);
+        Check.kelvin(tKelvin);
+        Check.optionalPositive("water vapour content (kg/m2)", vtKgPerM2);
+        Check.optionalFinite("station altitude (km)", hKm);
+        java.util.Objects.requireNonNull(mode, "mode");
         double val;
         if (mode == Mode.APPROX) {
             double g0 = gamma0Exact(fGHz, pHPa, rho, tKelvin);
             double gw = gammaWExact(fGHz, pHPa, rho, tKelvin);
             Heights hh = slantInclinedPathEquivalentHeight(fGHz, pHPa, rho, tKelvin);
             double aw = (vtKgPerM2 != null && hKm != null)
-                ? zenithWaterVapourAttenuation(Double.NaN, Double.NaN, Double.NaN, fGHz, vtKgPerM2, hKm)
+                ? zenithFromContent(fGHz, vtKgPerM2, hKm)
                 : gw * hh.hw();
             double a0 = g0 * hh.h0();
             val = (a0 + aw) / Math.sin(Math.toRadians(elDeg));
@@ -386,6 +425,14 @@ public final class P676 {
      */
     public static double gaseousAttenuationInclinedPath(double fGHz, double elDeg, double rho, double pHPa,
                                                         double tKelvin, double h1Km, double h2Km, Mode mode) {
+        Check.range("elevation angle (degrees)", elDeg, -90, 90);
+        Check.frequency(fGHz);
+        Check.positive("total pressure (hPa)", pHPa);
+        Check.nonNegative("water vapour density (g/m3)", rho);
+        Check.kelvin(tKelvin);
+        Check.finite("altitude of the first station (km)", h1Km);
+        Check.finite("altitude of the second station (km)", h2Km);
+        java.util.Objects.requireNonNull(mode, "mode");
         if (h1Km > 10 || h2Km > 10) {
             throw new IllegalArgumentException(String.format(
                 "Both stations must be at an altitude of less than 10 km. Tx: %.2f km, Rx: %.2f km", h1Km, h2Km));

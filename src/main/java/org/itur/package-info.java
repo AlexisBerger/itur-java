@@ -24,5 +24,12 @@
  * Conventions: latitudes/longitudes in degrees (any longitude is accepted), frequencies in GHz,
  * lengths in km unless a parameter name says otherwise, probabilities {@code p} in percent of an
  * average year, arguments typed {@code Double} are optional ({@code null} = derive from the ITU maps).
+ *
+ * <p>Arguments without a physical meaning (NaN, a latitude beyond 90 degrees, a non-positive
+ * frequency, an elevation outside ]0, 90] degrees for a slant path, a probability outside ]0, 100] %,
+ * a negative rainfall rate, ...) are rejected with an {@link java.lang.IllegalArgumentException} that
+ * names the argument and the accepted range. Arguments that are only outside the validity range of a
+ * Recommendation are accepted (a warning is logged where the Recommendation states a limit). A
+ * location that a map does not cover gives {@code NaN}, as in ITU-Rpy.
  */
 package org.itur;

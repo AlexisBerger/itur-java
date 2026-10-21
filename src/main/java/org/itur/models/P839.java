@@ -1,6 +1,7 @@
 package org.itur.models;
 
 import org.itur.grid.Grid;
+import org.itur.util.Check;
 import org.itur.util.Special;
 
 /**
@@ -20,6 +21,7 @@ public final class P839 {
      * @return 0 degC isotherm height above mean sea level (km)
      */
     public static double isotherm0(double latDeg, double lonDeg) {
+        Check.position(latDeg, lonDeg);
         double lon = Special.mod(lonDeg, 360);
         return Grid.load("839/v4_esa0height").bilinear(latDeg, lon);
     }

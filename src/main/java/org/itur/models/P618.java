@@ -1,5 +1,6 @@
 package org.itur.models;
 
+import org.itur.util.Check;
 import org.itur.util.Geodesy;
 import org.itur.util.Special;
 
@@ -94,6 +95,14 @@ public final class P618 {
      */
     public static double rainAttenuation(double latDeg, double lonDeg, double fGHz, double elDeg, Double hsKm,
                                          double p, Double r001, double tauDeg, Double lsKm) {
+        Check.position(latDeg, lonDeg);
+        Check.frequency(fGHz);
+        Check.slantElevation(elDeg);
+        Check.optionalFinite("station altitude (km)", hsKm);
+        Check.probability(p);
+        Check.optionalNonNegative("rainfall rate R0.01 (mm/h)", r001);
+        Check.finite("polarization tilt angle (degrees)", tauDeg);
+        Check.optionalNonNegative("slant path length (km)", lsKm);
         double lon = Special.mod(lonDeg, 360);
         double a = rainAttenuationRaw(latDeg, lon, fGHz, elDeg, hsKm, p, r001, tauDeg, lsKm);
         return a < 0 ? 0 : a;
@@ -125,6 +134,13 @@ public final class P618 {
      */
     public static double rainAttenuationProbability(double latDeg, double lonDeg, double elDeg, Double hsKm,
                                                     Double lsKm, Double p0Percent) {
+        Check.position(latDeg, lonDeg);
+        Check.slantElevation(elDeg);
+        Check.optionalFinite("station altitude (km)", hsKm);
+        Check.optionalNonNegative("slant path length (km)", lsKm);
+        if (p0Percent != null) {
+            Check.range("probability of rain P0 (%)", p0Percent, 0, 100);
+        }
         double lon = Special.mod(lonDeg, 360);
         double hs = hsKm != null ? hsKm : P1511.topographicAltitude(latDeg, lon);
         double p0 = (p0Percent != null ? p0Percent : P837.rainfallProbability(latDeg, lon)) / 100.0;
@@ -155,6 +171,12 @@ public final class P618 {
     public static LognormalFit fitRainAttenuationToLognormal(double latDeg, double lonDeg, double fGHz,
                                                               double elDeg, Double hsKm, double pkPercent,
                                                               double tauDeg) {
+        Check.position(latDeg, lonDeg);
+        Check.frequency(fGHz);
+        Check.slantElevation(elDeg);
+        Check.optionalFinite("station altitude (km)", hsKm);
+        Check.range("upper probability pk (%)", pkPercent, Math.nextUp(0.0), 100);
+        Check.finite("polarization tilt angle (degrees)", tauDeg);
         double lon = Special.mod(lonDeg, 360);
         double[] pi = {0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 3, 5, 10};
         int n = 0;
@@ -218,6 +240,16 @@ public final class P618 {
     public static double siteDiversityRainOutageProbability(double lat1, double lon1, double a1Db, double el1,
                                                             double lat2, double lon2, double a2Db, double el2,
                                                             double fGHz, double tauDeg, Double hs1, Double hs2) {
+        Check.position(lat1, lon1);
+        Check.position(lat2, lon2);
+        Check.positive("rain attenuation margin of site 1 (dB)", a1Db);
+        Check.positive("rain attenuation margin of site 2 (dB)", a2Db);
+        Check.slantElevation(el1);
+        Check.slantElevation(el2);
+        Check.frequency(fGHz);
+        Check.finite("polarization tilt angle (degrees)", tauDeg);
+        Check.optionalFinite("altitude of site 1 (km)", hs1);
+        Check.optionalFinite("altitude of site 2 (km)", hs2);
         double l1 = Special.mod(lon1, 360);
         double l2 = Special.mod(lon2, 360);
         double d = Geodesy.distanceKm(lat1, l1, lat2, l2);
@@ -251,6 +283,10 @@ public final class P618 {
      */
     public static double rainCrossPolarizationDiscrimination(double apDb, double fGHz, double elDeg, double p,
                                                              double tauDeg) {
+        Check.positive("rain attenuation Ap (dB)", apDb);
+        Check.slantElevation(elDeg);
+        Check.probability(p);
+        Check.finite("polarization tilt angle (degrees)", tauDeg);
         if (fGHz < 4 || fGHz > 55) {
             throw new IllegalArgumentException("The cross-polarization method is valid for 4 GHz <= f <= 55 GHz");
         }
@@ -326,6 +362,17 @@ public final class P618 {
     public static double scintillationAttenuationSigma(double latDeg, double lonDeg, double fGHz, double elDeg,
                                                        double dMeters, double eta, Double tCelsius, Double hPercent,
                                                        Double pHPa, double hLMeters) {
+        Check.position(latDeg, lonDeg);
+        Check.frequency(fGHz);
+        Check.slantElevation(elDeg);
+        Check.positive("antenna diameter (m)", dMeters);
+        Check.range("antenna efficiency", eta, Math.nextUp(0.0), 1);
+        if (tCelsius != null && hPercent != null && pHPa != null) { // otherwise they are not used
+            Check.celsius(tCelsius);
+            Check.humidity(hPercent);
+            Check.positive("pressure (hPa)", pHPa);
+        }
+        Check.positive("height of the turbulent layer (m)", hLMeters);
         double nWet;
         if (tCelsius != null && hPercent != null && pHPa != null) {
             double e = P453.waterVapourPressure(tCelsius, pHPa, hPercent);
@@ -364,6 +411,7 @@ public final class P618 {
     public static double scintillationAttenuation(double latDeg, double lonDeg, double fGHz, double elDeg, double p,
                                                   double dMeters, double eta, Double tCelsius, Double hPercent,
                                                   Double pHPa, double hLMeters) {
+        Check.probability(p);
         double sigma = scintillationAttenuationSigma(latDeg, lonDeg, fGHz, elDeg, dMeters, eta, tCelsius, hPercent,
             pHPa, hLMeters);
         double lp = Math.log10(p);

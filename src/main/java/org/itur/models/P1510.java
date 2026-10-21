@@ -1,6 +1,7 @@
 package org.itur.models;
 
 import org.itur.grid.Grid;
+import org.itur.util.Check;
 import org.itur.util.Special;
 
 /**
@@ -25,6 +26,7 @@ public final class P1510 {
      * @return annual mean surface (2 m) temperature (K)
      */
     public static double surfaceMeanTemperature(double latDeg, double lonDeg) {
+        Check.position(latDeg, lonDeg);
         return Grid.load("1510/v1_t_annual").bilinear(latDeg, lonFor(lonDeg));
     }
 
@@ -37,6 +39,7 @@ public final class P1510 {
      * @return monthly mean surface (2 m) temperature (K)
      */
     public static double surfaceMonthMeanTemperature(double latDeg, double lonDeg, int month) {
+        Check.position(latDeg, lonDeg);
         if (month < 1 || month > 12) {
             throw new IllegalArgumentException("month must be in 1..12");
         }
