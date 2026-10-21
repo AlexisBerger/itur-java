@@ -1,6 +1,12 @@
 package org.itur.util;
 
-/** Geodesic distance on the WGS84 ellipsoid (Vincenty's inverse formula, sub-millimetre accuracy). */
+/**
+ * Geodesic distance on the WGS84 ellipsoid (Vincenty's inverse formula, sub-millimetre accuracy).
+ * Vincenty's iteration does not converge for nearly antipodal points (more than about 179.4 degrees
+ * of longitude apart near the equator); the great-circle distance on a sphere of mean radius is returned
+ * then, within 0.5 % of the geodesic, which is of no consequence for the site separations of a
+ * propagation study.
+ */
 public final class Geodesy {
 
     private Geodesy() {
@@ -9,6 +15,7 @@ public final class Geodesy {
     private static final double A = 6378137.0;
     private static final double F = 1 / 298.257223563;
     private static final double B = A * (1 - F);
+    private static final double MEAN_RADIUS_KM = 6371.0088;
 
     /**
      * Distance in km between two points given in degrees, on the WGS-84 ellipsoid (Vincenty's
@@ -21,7 +28,7 @@ public final class Geodesy {
      * @return geodesic distance (km)
      */
     public static double distanceKm(double lat1, double lon1, double lat2, double lon2) {
-        double l = Math.toRadians(lon2 - lon1);
+        double l = Math.IEEEremainder(Math.toRadians(lon2 - lon1), 2 * Math.PI); // -pi..pi
         double u1 = Math.atan((1 - F) * Math.tan(Math.toRadians(lat1)));
         double u2 = Math.atan((1 - F) * Math.tan(Math.toRadians(lat2)));
         double sU1 = Math.sin(u1);
@@ -34,6 +41,7 @@ public final class Geodesy {
         double sigma = 0;
         double c2a = 0;
         double c2sm = 0;
+        boolean converged = false;
         for (int i = 0; i < 200; i++) {
             double sl = Math.sin(lam);
             double cl = Math.cos(lam);
@@ -54,8 +62,12 @@ public final class Geodesy {
             boolean done = Math.abs(lamNew - lam) < 1e-12;
             lam = lamNew;
             if (done) {
+                converged = true;
                 break;
             }
+        }
+        if (!converged) {
+            return greatCircleKm(lat1, lon1, lat2, lon2);
         }
         double u2sq = c2a * (A * A - B * B) / (B * B);
         double aa = 1 + u2sq / 16384 * (4096 + u2sq * (-768 + u2sq * (320 - 175 * u2sq)));
@@ -63,5 +75,16 @@ public final class Geodesy {
         double ds = bb * ss * (c2sm + bb / 4 * (cs * (-1 + 2 * c2sm * c2sm)
             - bb / 6 * c2sm * (-3 + 4 * ss * ss) * (-3 + 4 * c2sm * c2sm)));
         return B * aa * (sigma - ds) / 1e3;
+    }
+
+    /** Haversine distance on a sphere of mean radius, used when Vincenty's iteration fails. */
+    private static double greatCircleKm(double lat1, double lon1, double lat2, double lon2) {
+        double p1 = Math.toRadians(lat1);
+        double p2 = Math.toRadians(lat2);
+        double dp = p2 - p1;
+        double dl = Math.toRadians(lon2 - lon1);
+        double h = Math.sin(dp / 2) * Math.sin(dp / 2)
+            + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
+        return 2 * MEAN_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
     }
 }

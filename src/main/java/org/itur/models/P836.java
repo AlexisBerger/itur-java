@@ -98,7 +98,8 @@ public final class P836 {
      *
      * @param latDeg latitude (degrees, -90 to 90)
      * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
-     * @param p percentage of an average year the value is exceeded (%), 0.1 to 99
+     * @param p percentage of an average year the value is exceeded (%); the maps are tabulated from 0.1 %
+     *     to 99 %: below 0.1 % the value is extrapolated in log(p), above 99 % the result is {@code NaN}
      * @param altKm altitude of the station (km), or {@code null} to use the topographic altitude
      * @return surface water vapour density (g/m3)
      */
@@ -114,7 +115,8 @@ public final class P836 {
      *
      * @param latDeg latitude (degrees, -90 to 90)
      * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
-     * @param p percentage of an average year the value is exceeded (%), 0.1 to 99
+     * @param p percentage of an average year the value is exceeded (%); the maps are tabulated from 0.1 %
+     *     to 99 %: below 0.1 % the value is extrapolated in log(p), above 99 % the result is {@code NaN}
      * @param altKm altitude of the station (km), or {@code null} to use the topographic altitude
      * @return total water vapour content (kg/m2)
      */

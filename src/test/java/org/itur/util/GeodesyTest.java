@@ -39,4 +39,24 @@ class GeodesyTest {
     void longitudeConventionDoesNotMatter() {
         assertEquals(Geodesy.distanceKm(10, 170, 10, -170), Geodesy.distanceKm(10, 170, 10, 190), 1e-6);
     }
+
+    @Test
+    void nearlyAntipodalPoints() {
+        // Vincenty's iteration fails there: the result must still be close to half the circumference
+        assertEquals(20004, Geodesy.distanceKm(0, 0, 0, 180), 100);
+        assertEquals(20004, Geodesy.distanceKm(0, 0, 0, 179.9), 100);
+        assertEquals(20004, Geodesy.distanceKm(10, 20, -10, -160), 100);
+        double prev = 0;
+        for (double lon = 170; lon <= 180; lon += 0.5) {
+            double d = Geodesy.distanceKm(0, 0, 0, lon);
+            assertTrue(d > prev, "monotonic at " + lon);
+            prev = d;
+        }
+    }
+
+    @Test
+    void poles() {
+        assertEquals(0, Geodesy.distanceKm(90, 10, 90, -170), 1e-6);
+        assertEquals(10001.97, Geodesy.distanceKm(0, 33, 90, 77), 0.01); // equator to pole
+    }
 }

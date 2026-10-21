@@ -7,7 +7,7 @@ an independent check.
 
 ## Strategy
 
-Three layers, from the strictest to the most independent:
+Four layers, from the strictest to the most independent:
 
 1. **Unit tests** check the numerical building blocks (`SpecialTest`, `GridTest`, `GeodesyTest`),
    each recommendation on its own (`P835Test`, `P838Test`, `P453Test`, `P836Test`, `P837Test`,
@@ -17,8 +17,12 @@ Three layers, from the strictest to the most independent:
    monotonic behaviour, limiting cases, identities between functions, longitude conventions.
    `ReferenceValuesTest` adds a handful of end-to-end values computed with ITU-Rpy on its original
    float64 data, and the rejection of invalid inputs.
-2. **Golden vectors** compare every public function with ITU-Rpy on a large, fixed set of inputs.
-3. **Official ITU tables** compare the results with the numbers published by the ITU for each
+2. **Boundary tests** (`BoundaryTest`, `InputValidationTest`) cover the limits of the domains: poles
+   and the longitude seam of the maps, the ends of the probability, elevation and frequency ranges,
+   the places where a Recommendation switches formula, and degenerate inputs (no rain, no path
+   through the rain, a station above the rain height, very large antennas, thin air).
+3. **Golden vectors** compare every public function with ITU-Rpy on a large, fixed set of inputs.
+4. **Official ITU tables** compare the results with the numbers published by the ITU for each
    recommendation.
 
 ### Golden vectors
@@ -115,6 +119,28 @@ relies on numerical integration.
 - **Tables from other versions.** The P.840 and P.453 tables available correspond to P.840-8 and
   P.453-14, while this library implements P.840-7 and P.453-13. The values agree on the tested
   points, but they do not prove conformance of the older versions on their own.
+
+## Behaviour at the limits
+
+Limits that follow from the Recommendations or from ITU-Rpy, and are pinned by `BoundaryTest`:
+
+- **P.618-13 is discontinuous at 36° of latitude for elevations of 25° or less** (the correction β
+  does not vanish there): the rain attenuation drops by about 20 % when crossing 36° at 20° of
+  elevation. Above 25° of elevation, and at p = 1 %, it is continuous.
+- **P.676-13 Annex 2 inclined path** changes formula at 5° of elevation: the two sides differ by about
+  3 % where they meet. Below the horizon (−2°, probed by the golden vectors) the formula returns
+  meaningless, even negative, values, as ITU-Rpy does.
+- **P.835** has a 0.08 K step at 86 km between its two formulas, and returns a floor value (1e-62 hPa)
+  above 100 km.
+- **P.836-6**: the maps are tabulated from 0.1 % to 99 %; below 0.1 % the value is extrapolated in
+  log(p), above 99 % the result is NaN. The last latitude row (−90°) of the P.836 and P.453 maps is NaN.
+- **P.840-7**: p above 99 % throws an exception (P.836 returns NaN).
+- **P.837-7** gives 0 mm/h above the probability of rain, and its map value (p = 0.01 %) agrees with
+  the monthly statistics to 1e-5 relative around that probability.
+
+Defects found while writing these tests, and fixed: an exactly zero rainfall rate or slant path in
+P.618 gave NaN instead of 0 dB, and `Geodesy` gave wrong distances (up to 90 km) for nearly antipodal
+points because Vincenty's iteration does not converge there.
 
 ## What is not validated
 

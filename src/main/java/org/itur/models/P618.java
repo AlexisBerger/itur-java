@@ -64,6 +64,9 @@ public final class P618 {
             * (31 * (1 - Math.exp(-(el / (1 + xi)))) * Math.sqrt(lr * gammaR) / (f * f) - 0.45));
         double le = lr * v001;
         double a001 = gammaR * le;
+        if (a001 <= 0) {
+            return 0; // no rain or no path through the rain: the exponent below would be NaN
+        }
 
         double beta;
         if (p >= 1) {
