@@ -156,4 +156,19 @@ class P618Test {
         assertTrue(wet > dry);
         assertTrue(map > dry && map < wet * 1.5);
     }
+
+    @Test
+    void optionObjectsMatchTheLongForms() {
+        P618.RainOptions ro = P618.RainOptions.builder().r001MmPerHour(40.0).build();
+        assertEquals(P618.rainAttenuation(48.85, 2.35, 20, 35, null, 0.1, 40.0, 45, null),
+            P618.rainAttenuation(48.85, 2.35, 20, 35, 0.1, ro), 0);
+        P618.ScintillationOptions so = P618.ScintillationOptions.withMeteorology(15, 70, 1013);
+        assertEquals(P618.scintillationAttenuationSigma(48.85, 2.35, 20, 35, 1.2, 0.5, 15.0, 70.0, 1013.0, 1000),
+            P618.scintillationAttenuationSigma(48.85, 2.35, 20, 35, 1.2, so), 0);
+        P618.DiversitySite a = new P618.DiversitySite(48.85, 2.35, 3, 35);
+        P618.DiversitySite b = new P618.DiversitySite(43.30, 5.37, 3, 35);
+        assertEquals(P618.siteDiversityRainOutageProbability(48.85, 2.35, 3, 35, 43.30, 5.37, 3, 35, 20, 45, null, null),
+            P618.siteDiversityRainOutageProbability(a, b, 20, 45), 0);
+        assertThrows(NullPointerException.class, () -> P618.rainAttenuation(48.85, 2.35, 20, 35, 0.1, (P618.RainOptions) null));
+    }
 }

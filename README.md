@@ -48,6 +48,19 @@ var a = Itur.atmosphericAttenuationSlantPath(48.85, 2.35, 20.0, 35.0, 0.1, 1.2, 
 System.out.println(a.total() + " dB");
 ```
 
+A `Link` groups the fixed arguments of a link and gives curves and batches:
+
+```java
+var link = Itur.Link.builder().latitude(48.85).longitude(2.35)
+    .frequencyGHz(20.0).elevationDeg(35.0).antennaDiameterM(1.2).build();
+// or new Itur.Link(48.85, 2.35, 20.0, 35.0, 1.2): lat, lon, GHz, elevation, dish (m)
+var one = Itur.atmosphericAttenuationSlantPath(link, 0.1);
+var curve = Itur.attenuationCurve(link, new double[] {0.01, 0.1, 1, 10}, Itur.Options.defaults());
+var many = Itur.attenuationBatch(List.of(link, other), 0.1, Itur.Options.defaults());
+```
+
+The P.618 methods also take option objects (`P618.RainOptions`, `P618.ScintillationOptions`, `P618.DiversitySite`) instead of long lists of nullable arguments; the long forms remain. The terrestrial gaseous attenuation is `P676.gaseousAttenuationTerrestrialPath(rKm, fGHz, rho, pHPa, tKelvin)`; the 7-argument form, `gamma0Approx` and `gammaWApprox` are deprecated (P.676-13 has no approximation; the latter two warn once).
+
 Runnable example: `java -cp target/classes examples/LinkBudgetExample.java`
 (Paris, 20 GHz, 35°, p = 0.1 %, 1.2 m dish: gases 0.95; clouds 0.78; rain 4.14; scintillation 0.45; total 5.89 dB).
 

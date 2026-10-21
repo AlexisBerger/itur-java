@@ -341,4 +341,172 @@ public final class Itur {
                                                               double elDeg, double p, double dMeters) {
         return atmosphericAttenuationSlantPath(latDeg, lonDeg, fGHz, elDeg, p, dMeters, Options.defaults());
     }
+
+    /**
+     * An earth-space link: the station, the frequency, the elevation and the antenna diameter.
+     * It groups the arguments that stay fixed while the time percentage varies.
+     *
+     * @param latDeg latitude of the station (degrees)
+     * @param lonDeg longitude of the station (degrees)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
+     * @param dMeters earth-station antenna diameter (m)
+     */
+    public record Link(double latDeg, double lonDeg, double fGHz, double elDeg, double dMeters) {
+        /** Validates the components. */
+        public Link {
+            Check.position(latDeg, lonDeg);
+            Check.frequency(fGHz);
+            Check.slantElevation(elDeg);
+            Check.positive("antenna diameter (m)", dMeters);
+        }
+
+        /**
+         * Builder whose values are all unset; {@link Builder#build()} rejects any that is missing.
+         *
+         * @return a new builder
+         */
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        /** Mutable builder for {@link Link}; every value is required. */
+        public static final class Builder {
+            private double latDeg = Double.NaN;
+            private double lonDeg = Double.NaN;
+            private double fGHz = Double.NaN;
+            private double elDeg = Double.NaN;
+            private double dMeters = Double.NaN;
+
+            private Builder() {
+            }
+
+            /**
+             * Latitude of the station.
+             *
+             * @param v latitude (degrees)
+             * @return this builder
+             */
+            public Builder latitude(double v) {
+                this.latDeg = v;
+                return this;
+            }
+
+            /**
+             * Longitude of the station.
+             *
+             * @param v longitude (degrees)
+             * @return this builder
+             */
+            public Builder longitude(double v) {
+                this.lonDeg = v;
+                return this;
+            }
+
+            /**
+             * Frequency of the link.
+             *
+             * @param v frequency (GHz)
+             * @return this builder
+             */
+            public Builder frequencyGHz(double v) {
+                this.fGHz = v;
+                return this;
+            }
+
+            /**
+             * Elevation angle of the path.
+             *
+             * @param v elevation angle (degrees)
+             * @return this builder
+             */
+            public Builder elevationDeg(double v) {
+                this.elDeg = v;
+                return this;
+            }
+
+            /**
+             * Earth-station antenna diameter.
+             *
+             * @param v diameter (m)
+             * @return this builder
+             */
+            public Builder antennaDiameterM(double v) {
+                this.dMeters = v;
+                return this;
+            }
+
+            /**
+             * Builds the link.
+             *
+             * @return the link
+             * @throws IllegalArgumentException if a value is missing (unset values are NaN) or invalid
+             */
+            public Link build() {
+                return new Link(latDeg, lonDeg, fGHz, elDeg, dMeters);
+            }
+        }
+    }
+
+    /**
+     * Total attenuation of a link exceeded for {@code p} percent of the time.
+     *
+     * @param link the link
+     * @param p percentage of time the attenuation is exceeded (0.001 to 50)
+     * @param o optional inputs; {@code null} fields are derived from the maps
+     * @return the components and the total attenuation (dB)
+     */
+    public static Attenuation atmosphericAttenuationSlantPath(Link link, double p, Options o) {
+        return atmosphericAttenuationSlantPath(link.latDeg(), link.lonDeg(), link.fGHz(), link.elDeg(), p,
+            link.dMeters(), o);
+    }
+
+    /**
+     * Total attenuation of a link exceeded for {@code p} percent of the time, default options.
+     *
+     * @param link the link
+     * @param p percentage of time the attenuation is exceeded (0.001 to 50)
+     * @return the components and the total attenuation (dB)
+     */
+    public static Attenuation atmosphericAttenuationSlantPath(Link link, double p) {
+        return atmosphericAttenuationSlantPath(link, p, Options.defaults());
+    }
+
+    /**
+     * Attenuation of a link for several time percentages (the complementary distribution curve).
+     * The result has one entry per element of {@code ps}, in the same order.
+     *
+     * @param link the link
+     * @param ps percentages of time (each 0.001 to 50)
+     * @param o optional inputs; {@code null} fields are derived from the maps
+     * @return one {@link Attenuation} per percentage
+     */
+    public static java.util.List<Attenuation> attenuationCurve(Link link, double[] ps, Options o) {
+        java.util.Objects.requireNonNull(ps, "percentages");
+        java.util.Objects.requireNonNull(o, "options");
+        java.util.List<Attenuation> out = new java.util.ArrayList<>(ps.length);
+        for (double p : ps) {
+            out.add(atmosphericAttenuationSlantPath(link, p, o));
+        }
+        return java.util.List.copyOf(out);
+    }
+
+    /**
+     * Attenuation of several links for the same time percentage. The result has one entry per link, in
+     * the same order.
+     *
+     * @param links the links
+     * @param p percentage of time (0.001 to 50)
+     * @param o optional inputs applied to every link
+     * @return one {@link Attenuation} per link
+     */
+    public static java.util.List<Attenuation> attenuationBatch(java.util.List<Link> links, double p, Options o) {
+        java.util.Objects.requireNonNull(links, "links");
+        java.util.Objects.requireNonNull(o, "options");
+        java.util.List<Attenuation> out = new java.util.ArrayList<>(links.size());
+        for (Link l : links) {
+            out.add(atmosphericAttenuationSlantPath(l, p, o));
+        }
+        return java.util.List.copyOf(out);
+    }
 }

@@ -60,6 +60,8 @@ public final class P676 {
     };
 
     private static final System.Logger LOG = System.getLogger(P676.class.getName());
+    private static final java.util.concurrent.atomic.AtomicBoolean WARNED_APPROX =
+        new java.util.concurrent.atomic.AtomicBoolean();
 
     private static double[][] readTable(String resource) {
         try (InputStream in = P676.class.getResourceAsStream(resource)) {
@@ -173,12 +175,12 @@ public final class P676 {
      * @param rho water vapour density (g/m3)
      * @param tKelvin temperature (K)
      * @return total gaseous specific attenuation (dB/km)
-     * @deprecated use {@link #gamma0Exact}
+     * @deprecated P.676-13 has no approximation: use {@link #gamma0Exact}. A warning is logged the first
+     *     time this is called.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static double gamma0Approx(double fGHz, double pHPa, double rho, double tKelvin) {
-        LOG.log(System.Logger.Level.WARNING, "ITU-R P.676-13 has no approximation of gamma_0; "
-            + "the line-by-line total specific attenuation is returned");
+        warnApproxOnce();
         return gammaExact(fGHz, pHPa, rho, tKelvin);
     }
 
@@ -191,13 +193,20 @@ public final class P676 {
      * @param rho water vapour density (g/m3)
      * @param tKelvin temperature (K)
      * @return total gaseous specific attenuation (dB/km)
-     * @deprecated use {@link #gammaWExact}
+     * @deprecated P.676-13 has no approximation: use {@link #gammaWExact}. A warning is logged the first
+     *     time this is called.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static double gammaWApprox(double fGHz, double pHPa, double rho, double tKelvin) {
-        LOG.log(System.Logger.Level.WARNING, "ITU-R P.676-13 has no approximation of gamma_w; "
-            + "the line-by-line total specific attenuation is returned");
+        warnApproxOnce();
         return gammaExact(fGHz, pHPa, rho, tKelvin);
+    }
+
+    private static void warnApproxOnce() {
+        if (WARNED_APPROX.compareAndSet(false, true)) {
+            LOG.log(System.Logger.Level.WARNING, "ITU-R P.676-13 has no approximation of gamma_0 and gamma_w; "
+                + "gamma0Approx and gammaWApprox return the line-by-line total specific attenuation");
+        }
     }
 
     // ---- equivalent heights, zenith water vapour -------------------------------------------------
@@ -302,6 +311,23 @@ public final class P676 {
 
     /**
      * Attenuation (dB) on a terrestrial path of {@code rKm} km: the line-by-line specific attenuation
+     * times the path length.
+     *
+     * @param rKm path length (km)
+     * @param fGHz frequency (GHz)
+     * @param rho water vapour density (g/m3)
+     * @param pHPa total pressure (hPa)
+     * @param tKelvin temperature (K)
+     * @return gaseous attenuation of the path (dB)
+     */
+    public static double gaseousAttenuationTerrestrialPath(double rKm, double fGHz, double rho, double pHPa,
+                                                           double tKelvin) {
+        Check.nonNegative("path length (km)", rKm);
+        return gammaExact(fGHz, pHPa, rho, tKelvin) * rKm;
+    }
+
+    /**
+     * Attenuation (dB) on a terrestrial path of {@code rKm} km: the line-by-line specific attenuation
      * times the path length (P.676-13 has no separate approximation, so both modes are identical).
      *
      * @param rKm path length (km)
@@ -312,17 +338,14 @@ public final class P676 {
      * @param tKelvin temperature (K)
      * @param mode calculation method (no effect for terrestrial paths)
      * @return gaseous attenuation of the path (dB)
+     * @deprecated the elevation angle and the mode are not used: call
+     *     {@link #gaseousAttenuationTerrestrialPath(double, double, double, double, double)}
      */
+    @Deprecated
     public static double gaseousAttenuationTerrestrialPath(double rKm, double fGHz, double elDeg, double rho,
                                                            double pHPa, double tKelvin, Mode mode) {
-        Check.nonNegative("path length (km)", rKm);
-        Check.frequency(fGHz);
-        Check.positive("total pressure (hPa)", pHPa);
-        Check.nonNegative("water vapour density (g/m3)", rho);
-        Check.kelvin(tKelvin);
         java.util.Objects.requireNonNull(mode, "mode");
-        // P.676-13 has no separate approximation: both modes use the line-by-line method
-        return gammaExact(fGHz, pHPa, rho, tKelvin) * rKm;
+        return gaseousAttenuationTerrestrialPath(rKm, fGHz, rho, pHPa, tKelvin);
     }
 
     /**

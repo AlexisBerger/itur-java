@@ -119,8 +119,16 @@ class P676Test {
     @Test
     void terrestrialPathIsTheSpecificAttenuationTimesTheLength() {
         double g = P676.gammaExact(20, P, RHO, T);
-        assertEquals(10 * g, P676.gaseousAttenuationTerrestrialPath(10, 20, 0, RHO, P, T, P676.Mode.EXACT), 1e-12);
-        assertEquals(0, P676.gaseousAttenuationTerrestrialPath(0, 20, 0, RHO, P, T, P676.Mode.APPROX), 0);
+        assertEquals(10 * g, P676.gaseousAttenuationTerrestrialPath(10, 20, RHO, P, T), 1e-12);
+        assertEquals(0, P676.gaseousAttenuationTerrestrialPath(0, 20, RHO, P, T), 0);
+        assertThrows(IllegalArgumentException.class, () -> P676.gaseousAttenuationTerrestrialPath(-1, 20, RHO, P, T));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void deprecatedTerrestrialFormMatchesTheNewOne() {
+        assertEquals(P676.gaseousAttenuationTerrestrialPath(10, 20, RHO, P, T),
+            P676.gaseousAttenuationTerrestrialPath(10, 20, 0, RHO, P, T, P676.Mode.APPROX), 0);
     }
 
     @Test
@@ -134,7 +142,7 @@ class P676Test {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "removal"})
     void deprecatedApproximationsReturnTheTotal() {
         assertEquals(P676.gammaExact(20, P, RHO, T), P676.gamma0Approx(20, P, RHO, T), 0);
         assertEquals(P676.gammaExact(20, P, RHO, T), P676.gammaWApprox(20, P, RHO, T), 0);

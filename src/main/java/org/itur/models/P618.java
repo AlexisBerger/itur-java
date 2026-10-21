@@ -30,6 +30,159 @@ public final class P618 {
     public record LognormalFit(double sigmaLnA, double mLnA) {
     }
 
+    /**
+     * Optional inputs of the rain attenuation method; {@code null} means "derive from the ITU maps".
+     * Build it with {@link #builder()} and set only what differs from {@link #defaults()}.
+     *
+     * @param hsKm station altitude above mean sea level (km), default P.1511
+     * @param r001MmPerHour rainfall rate exceeded for 0.01 % of the time (mm/h), default P.837
+     * @param tauDeg polarization tilt angle relative to the horizontal (degrees), 45 for circular
+     * @param lsKm slant path length below the rain height (km), default derived from P.839
+     */
+    public record RainOptions(Double hsKm, Double r001MmPerHour, double tauDeg, Double lsKm) {
+
+        /**
+         * Everything derived from the maps, circular polarization.
+         *
+         * @return the default options
+         */
+        public static RainOptions defaults() {
+            return builder().build();
+        }
+
+        /**
+         * Builder with the defaults of {@link #defaults()}.
+         *
+         * @return a new builder
+         */
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        /** Mutable builder for {@link RainOptions}. */
+        public static final class Builder {
+            private Double hsKm;
+            private Double r001MmPerHour;
+            private double tauDeg = 45;
+            private Double lsKm;
+
+            private Builder() {
+            }
+
+            /**
+             * Station altitude above mean sea level (km).
+             *
+             * @param v station altitude (km)
+             * @return this builder
+             */
+            public Builder hsKm(double v) {
+                hsKm = v;
+                return this;
+            }
+
+            /**
+             * Rainfall rate exceeded for 0.01 % of the time (mm/h).
+             *
+             * @param v rainfall rate (mm/h)
+             * @return this builder
+             */
+            public Builder r001MmPerHour(double v) {
+                r001MmPerHour = v;
+                return this;
+            }
+
+            /**
+             * Polarization tilt angle (degrees, default 45 = circular).
+             *
+             * @param v tilt angle relative to the horizontal (degrees)
+             * @return this builder
+             */
+            public Builder tauDeg(double v) {
+                tauDeg = v;
+                return this;
+            }
+
+            /**
+             * Slant path length below the rain height (km).
+             *
+             * @param v slant path length (km)
+             * @return this builder
+             */
+            public Builder lsKm(double v) {
+                lsKm = v;
+                return this;
+            }
+
+            /**
+             * Builds the options.
+             *
+             * @return the immutable options
+             */
+            public RainOptions build() {
+                return new RainOptions(hsKm, r001MmPerHour, tauDeg, lsKm);
+            }
+        }
+    }
+
+    /**
+     * Optional inputs of the scintillation method.
+     *
+     * @param eta antenna efficiency, 0.5 is a good default
+     * @param tCelsius average surface temperature (deg C), or {@code null}
+     * @param hPercent average surface relative humidity (%), or {@code null}
+     * @param pHPa average surface pressure (hPa), or {@code null}; when any of these three is
+     *     {@code null} the wet refractivity is taken from the P.453 map
+     * @param hLMeters height of the turbulent layer (m), 1000 by default
+     */
+    public record ScintillationOptions(double eta, Double tCelsius, Double hPercent, Double pHPa,
+                                       double hLMeters) {
+
+        /**
+         * Efficiency 0.5, turbulent layer of 1000 m, wet refractivity from the P.453 map.
+         *
+         * @return the default options
+         */
+        public static ScintillationOptions defaults() {
+            return new ScintillationOptions(0.5, null, null, null, 1000);
+        }
+
+        /**
+         * Options with the surface meteorology of the station, which replaces the P.453 map.
+         *
+         * @param tCelsius average surface temperature (deg C)
+         * @param hPercent average surface relative humidity (%)
+         * @param pHPa average surface pressure (hPa)
+         * @return the options, with the other values of {@link #defaults()}
+         */
+        public static ScintillationOptions withMeteorology(double tCelsius, double hPercent, double pHPa) {
+            return new ScintillationOptions(0.5, tCelsius, hPercent, pHPa, 1000);
+        }
+    }
+
+    /**
+     * One of the two stations of a site diversity system.
+     *
+     * @param latDeg latitude (degrees)
+     * @param lonDeg longitude (degrees)
+     * @param marginDb rain attenuation margin of the link at this station (dB)
+     * @param elDeg elevation angle (degrees)
+     * @param hsKm station altitude (km), or {@code null} to use P.1511
+     */
+    public record DiversitySite(double latDeg, double lonDeg, double marginDb, double elDeg, Double hsKm) {
+
+        /**
+         * A station whose altitude is taken from P.1511.
+         *
+         * @param latDeg latitude (degrees)
+         * @param lonDeg longitude (degrees)
+         * @param marginDb rain attenuation margin of the link at this station (dB)
+         * @param elDeg elevation angle (degrees)
+         */
+        public DiversitySite(double latDeg, double lonDeg, double marginDb, double elDeg) {
+            this(latDeg, lonDeg, marginDb, elDeg, null);
+        }
+    }
+
     // ---- rain attenuation ------------------------------------------------------------------
 
     private static double slantPathLength(double elDeg, double hr, double hs) {
@@ -421,5 +574,84 @@ public final class P618 {
         double a = -0.061 * lp * lp * lp + 0.072 * lp * lp - 1.71 * lp + 3;
         double as = a * sigma;
         return as < 0 ? 0 : as;
+    }
+
+    // ---- overloads taking option objects ----------------------------------------------------------
+
+    /**
+     * Rain attenuation (dB) exceeded for {@code p} % of an average year, with the optional inputs
+     * grouped in a {@link RainOptions}. Same as the long form of
+     * {@link #rainAttenuation(double, double, double, double, Double, double, Double, double, Double)}.
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
+     * @param p percentage of time (0.001 to 5)
+     * @param o optional inputs
+     * @return rain attenuation exceeded for {@code p} % of the time (dB)
+     */
+    public static double rainAttenuation(double latDeg, double lonDeg, double fGHz, double elDeg, double p,
+                                         RainOptions o) {
+        java.util.Objects.requireNonNull(o, "options");
+        return rainAttenuation(latDeg, lonDeg, fGHz, elDeg, o.hsKm(), p, o.r001MmPerHour(), o.tauDeg(), o.lsKm());
+    }
+
+    /**
+     * Standard deviation of the tropospheric scintillation (dB), with the optional inputs grouped in a
+     * {@link ScintillationOptions}.
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
+     * @param dMeters antenna diameter (m)
+     * @param o optional inputs
+     * @return standard deviation of the signal amplitude (dB)
+     */
+    public static double scintillationAttenuationSigma(double latDeg, double lonDeg, double fGHz, double elDeg,
+                                                       double dMeters, ScintillationOptions o) {
+        java.util.Objects.requireNonNull(o, "options");
+        return scintillationAttenuationSigma(latDeg, lonDeg, fGHz, elDeg, dMeters, o.eta(), o.tCelsius(),
+            o.hPercent(), o.pHPa(), o.hLMeters());
+    }
+
+    /**
+     * Tropospheric scintillation fade depth (dB) exceeded for {@code p} % of the time, with the optional
+     * inputs grouped in a {@link ScintillationOptions}.
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
+     * @param p percentage of time the fade depth is exceeded
+     * @param dMeters antenna diameter (m)
+     * @param o optional inputs
+     * @return scintillation fade depth (dB)
+     */
+    public static double scintillationAttenuation(double latDeg, double lonDeg, double fGHz, double elDeg, double p,
+                                                  double dMeters, ScintillationOptions o) {
+        java.util.Objects.requireNonNull(o, "options");
+        return scintillationAttenuation(latDeg, lonDeg, fGHz, elDeg, p, dMeters, o.eta(), o.tCelsius(),
+            o.hPercent(), o.pHPa(), o.hLMeters());
+    }
+
+    /**
+     * Probability (%) that the rain attenuation exceeds both margins at two sites simultaneously (site
+     * diversity), with each station described by a {@link DiversitySite}.
+     *
+     * @param site1 first station
+     * @param site2 second station
+     * @param fGHz frequency (GHz)
+     * @param tauDeg polarization tilt angle (degrees)
+     * @return joint outage probability (%)
+     */
+    public static double siteDiversityRainOutageProbability(DiversitySite site1, DiversitySite site2, double fGHz,
+                                                            double tauDeg) {
+        java.util.Objects.requireNonNull(site1, "site1");
+        java.util.Objects.requireNonNull(site2, "site2");
+        return siteDiversityRainOutageProbability(site1.latDeg(), site1.lonDeg(), site1.marginDb(), site1.elDeg(),
+            site2.latDeg(), site2.lonDeg(), site2.marginDb(), site2.elDeg(), fGHz, tauDeg, site1.hsKm(),
+            site2.hsKm());
     }
 }

@@ -95,7 +95,7 @@ final class GoldenCases {
     }
 
     // ---------------------------------------------------------------------------------------
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "removal"})
     static double eval(String file, String fn, double[] a) {
         return switch (file) {
             case "p838" -> switch (fn) {
@@ -165,8 +165,8 @@ final class GoldenCases {
                 case "slant_a" -> P676.gaseousAttenuationSlantPath(a[0], a[1], a[2], a[3], a[4], null, null, P676.Mode.APPROX);
                 case "slant_a_vt" -> P676.gaseousAttenuationSlantPath(a[0], a[1], a[2], a[3], a[4], a[5], a[6], P676.Mode.APPROX);
                 case "slant_e" -> P676.gaseousAttenuationSlantPath(a[0], a[1], a[2], a[3], a[4], null, null, P676.Mode.EXACT);
-                case "terr_a" -> P676.gaseousAttenuationTerrestrialPath(a[0], a[1], a[2], a[3], a[4], a[5], P676.Mode.APPROX);
-                case "terr_e" -> P676.gaseousAttenuationTerrestrialPath(a[0], a[1], a[2], a[3], a[4], a[5], P676.Mode.EXACT);
+                case "terr_a" -> P676.gaseousAttenuationTerrestrialPath(a[0], a[1], a[3], a[4], a[5]);
+                case "terr_e" -> P676.gaseousAttenuationTerrestrialPath(a[0], a[1], a[3], a[4], a[5]);
                 case "incl_a" -> P676.gaseousAttenuationInclinedPath(a[0], a[1], a[2], a[3], a[4], a[5], a[6], P676.Mode.APPROX);
                 case "incl_e" -> P676.gaseousAttenuationInclinedPath(a[0], a[1], a[2], a[3], a[4], a[5], a[6], P676.Mode.EXACT);
                 case "zwv" -> P676.zenithWaterVapourAttenuation(a[0], a[1], a[2], a[3], null, null);
