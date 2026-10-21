@@ -30,10 +30,18 @@ public final class P676 {
      * (Annex 1, ray tracing with the line-by-line specific attenuation).
      */
     public enum Mode {
-        APPROX, EXACT
+        /** Annex 2: equivalent heights. */
+        APPROX,
+        /** Annex 1: line-by-line specific attenuation integrated by ray tracing. */
+        EXACT
     }
 
-    /** Equivalent heights (km) for oxygen ({@code h0}) and water vapour ({@code hw}). */
+    /**
+     * Equivalent heights for oxygen and water vapour.
+     *
+     * @param h0 equivalent height of dry air (km)
+     * @param hw equivalent height of water vapour (km)
+     */
     public record Heights(double h0, double hw) {
     }
 
@@ -80,7 +88,15 @@ public final class P676 {
 
     // ---- specific attenuation ------------------------------------------------------------------
 
-    /** Specific attenuation of dry air (dB/km), line-by-line (Annex 1). */
+    /**
+     * Specific attenuation of dry air (dB/km), line-by-line (Annex 1).
+     *
+     * @param fGHz frequency (GHz)
+     * @param pHPa total pressure (hPa)
+     * @param rho water vapour density (g/m3)
+     * @param tKelvin temperature (K)
+     * @return specific attenuation of dry air (dB/km)
+     */
     public static double gamma0Exact(double fGHz, double pHPa, double rho, double tKelvin) {
         double theta = 300 / tKelvin;
         double e = rho * tKelvin / 216.7;
@@ -101,7 +117,15 @@ public final class P676 {
         return 0.1820 * fGHz * (sum + nd);
     }
 
-    /** Specific attenuation of water vapour (dB/km), line-by-line (Annex 1). */
+    /**
+     * Specific attenuation of water vapour (dB/km), line-by-line (Annex 1).
+     *
+     * @param fGHz frequency (GHz)
+     * @param pHPa total pressure (hPa)
+     * @param rho water vapour density (g/m3)
+     * @param tKelvin temperature (K)
+     * @return specific attenuation of water vapour (dB/km)
+     */
     public static double gammaWExact(double fGHz, double pHPa, double rho, double tKelvin) {
         double theta = 300 / tKelvin;
         double e = rho * tKelvin / 216.7;
@@ -118,7 +142,15 @@ public final class P676 {
         return 0.1820 * fGHz * sum;
     }
 
-    /** Total gaseous specific attenuation (dB/km), line-by-line. */
+    /**
+     * Total gaseous specific attenuation (dB/km), line-by-line: dry air plus water vapour.
+     *
+     * @param fGHz frequency (GHz)
+     * @param pHPa total pressure (hPa)
+     * @param rho water vapour density (g/m3)
+     * @param tKelvin temperature (K)
+     * @return total gaseous specific attenuation (dB/km)
+     */
     public static double gammaExact(double fGHz, double pHPa, double rho, double tKelvin) {
         return gamma0Exact(fGHz, pHPa, rho, tKelvin) + gammaWExact(fGHz, pHPa, rho, tKelvin);
     }
@@ -127,6 +159,11 @@ public final class P676 {
      * P.676-13 has no explicit approximation of the dry-air specific attenuation: like ITU-Rpy,
      * this returns the <b>total</b> line-by-line {@link #gammaExact} (dry air + water vapour).
      *
+     * @param fGHz frequency (GHz)
+     * @param pHPa total pressure (hPa)
+     * @param rho water vapour density (g/m3)
+     * @param tKelvin temperature (K)
+     * @return total gaseous specific attenuation (dB/km)
      * @deprecated use {@link #gamma0Exact}
      */
     @Deprecated
@@ -140,6 +177,11 @@ public final class P676 {
      * P.676-13 has no explicit approximation of the water-vapour specific attenuation: like
      * ITU-Rpy, this returns the <b>total</b> line-by-line {@link #gammaExact}.
      *
+     * @param fGHz frequency (GHz)
+     * @param pHPa total pressure (hPa)
+     * @param rho water vapour density (g/m3)
+     * @param tKelvin temperature (K)
+     * @return total gaseous specific attenuation (dB/km)
      * @deprecated use {@link #gammaWExact}
      */
     @Deprecated
@@ -183,9 +225,11 @@ public final class P676 {
      * linearly in the tabulated frequencies and {@code Ps = P + e} the total pressure;
      * {@code hw = A f + B + sum_i ai / ((f - fi)^2 + bi)}.
      *
+     * @param fGHz frequency (GHz)
      * @param pHPa dry-air pressure {@code P} (hPa)
      * @param rho water vapour density (g/m3)
      * @param tKelvin temperature (K)
+     * @return the equivalent heights {@code h0} (dry air) and {@code hw} (water vapour), in km
      */
     public static Heights slantInclinedPathEquivalentHeight(double fGHz, double pHPa, double rho,
                                                             double tKelvin) {
@@ -202,9 +246,13 @@ public final class P676 {
     /**
      * Zenith attenuation due to water vapour (dB), Annex 2 Section 2.3.
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
      * @param p percentage of time (used only to look up the water vapour content)
+     * @param fGHz frequency (GHz)
      * @param vtKgPerM2 integrated water vapour content (kg/m2), or {@code null} to take it from P.836
      * @param hKm station altitude (km), or {@code null} to take it from P.1511
+     * @return zenith attenuation due to water vapour (dB)
      */
     public static double zenithWaterVapourAttenuation(double latDeg, double lonDeg, double p, double fGHz,
                                                      Double vtKgPerM2, Double hKm) {
@@ -227,7 +275,19 @@ public final class P676 {
 
     // ---- path attenuation -------------------------------------------------------------------------
 
-    /** Attenuation (dB) on a terrestrial path of {@code rKm} km. */
+    /**
+     * Attenuation (dB) on a terrestrial path of {@code rKm} km: the line-by-line specific attenuation
+     * times the path length (P.676-13 has no separate approximation, so both modes are identical).
+     *
+     * @param rKm path length (km)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees); not used, kept for compatibility with ITU-Rpy
+     * @param rho water vapour density (g/m3)
+     * @param pHPa total pressure (hPa)
+     * @param tKelvin temperature (K)
+     * @param mode calculation method (no effect for terrestrial paths)
+     * @return gaseous attenuation of the path (dB)
+     */
     public static double gaseousAttenuationTerrestrialPath(double rKm, double fGHz, double elDeg, double rho,
                                                            double pHPa, double tKelvin, Mode mode) {
         // P.676-13 has no separate approximation: both modes use the line-by-line method
@@ -238,11 +298,15 @@ public final class P676 {
      * Gaseous attenuation (dB) of a slant path through the whole atmosphere; negative values are
      * clipped to 0.
      *
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
      * @param rho surface water vapour density (g/m3)
      * @param pHPa surface pressure (hPa)
      * @param tKelvin surface temperature (K)
      * @param vtKgPerM2 integrated water vapour content (kg/m2) or {@code null} (APPROX mode only)
      * @param hKm station altitude (km) or {@code null} (APPROX mode only)
+     * @param mode {@link Mode#APPROX} (Annex 2) or {@link Mode#EXACT} (Annex 1 ray tracing)
+     * @return gaseous attenuation of the slant path (dB)
      */
     public static double gaseousAttenuationSlantPath(double fGHz, double elDeg, double rho, double pHPa,
                                                      double tKelvin, Double vtKgPerM2, Double hKm, Mode mode) {
@@ -308,6 +372,17 @@ public final class P676 {
     /**
      * Gaseous attenuation (dB) on an inclined path between two stations at altitudes {@code h1Km}
      * and {@code h2Km} (both below 10 km).
+     *
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
+     * @param rho surface water vapour density (g/m3)
+     * @param pHPa surface pressure (hPa)
+     * @param tKelvin surface temperature (K)
+     * @param h1Km altitude of the first station (km)
+     * @param h2Km altitude of the second station (km)
+     * @param mode calculation method
+     * @return gaseous attenuation of the inclined path (dB)
+     * @throws IllegalArgumentException if either altitude is above 10 km
      */
     public static double gaseousAttenuationInclinedPath(double fGHz, double elDeg, double rho, double pHPa,
                                                         double tKelvin, double h1Km, double h2Km, Mode mode) {

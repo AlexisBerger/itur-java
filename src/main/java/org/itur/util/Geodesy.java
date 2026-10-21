@@ -10,7 +10,16 @@ public final class Geodesy {
     private static final double F = 1 / 298.257223563;
     private static final double B = A * (1 - F);
 
-    /** Distance in km between two points given in degrees. */
+    /**
+     * Distance in km between two points given in degrees, on the WGS-84 ellipsoid (Vincenty's
+     * inverse formula).
+     *
+     * @param lat1 latitude of the first point (degrees)
+     * @param lon1 longitude of the first point (degrees)
+     * @param lat2 latitude of the second point (degrees)
+     * @param lon2 longitude of the second point (degrees)
+     * @return geodesic distance (km)
+     */
     public static double distanceKm(double lat1, double lon1, double lat2, double lon2) {
         double l = Math.toRadians(lon2 - lon1);
         double u1 = Math.atan((1 - F) * Math.tan(Math.toRadians(lat1)));

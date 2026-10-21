@@ -93,18 +93,26 @@ public final class P836 {
     }
 
     /**
-     * Surface water vapour density (g/m3) exceeded for {@code p} % of an average year.
+     * Surface water vapour density exceeded for {@code p} % of an average year (P.836-6).
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param p percentage of an average year the value is exceeded (%), 0.1 to 99
      * @param altKm altitude of the station (km), or {@code null} to use the topographic altitude
+     * @return surface water vapour density (g/m3)
      */
     public static double surfaceWaterVapourDensity(double latDeg, double lonDeg, double p, Double altKm) {
         return interpolate("rho", latDeg, lonDeg, p, altKm);
     }
 
     /**
-     * Total columnar water vapour content (kg/m2) exceeded for {@code p} % of an average year.
+     * Total columnar water vapour content exceeded for {@code p} % of an average year (P.836-6).
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param p percentage of an average year the value is exceeded (%), 0.1 to 99
      * @param altKm altitude of the station (km), or {@code null} to use the topographic altitude
+     * @return total water vapour content (kg/m2)
      */
     public static double totalWaterVapourContent(double latDeg, double lonDeg, double p, Double altKm) {
         return interpolate("v", latDeg, lonDeg, p, altKm);

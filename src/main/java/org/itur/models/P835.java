@@ -15,7 +15,12 @@ public final class P835 {
         return 6356.766 * hKm / (6356.766 + hKm);
     }
 
-    /** Standard temperature (K) at geometric height {@code hKm} (km). */
+    /**
+     * Standard (reference) temperature profile of P.835.
+     *
+     * @param hKm geometric height above mean sea level (km), 0 to 100
+     * @return temperature (K)
+     */
     public static double standardTemperature(double hKm) {
         double hp = geopotential(hKm);
         if (hp <= 11) {
@@ -41,7 +46,12 @@ public final class P835 {
         return 195.08134;
     }
 
-    /** Standard total pressure (hPa) at geometric height {@code hKm} (km). */
+    /**
+     * Standard (reference) total pressure profile of P.835.
+     *
+     * @param hKm geometric height above mean sea level (km), 0 to 100
+     * @return total pressure (hPa)
+     */
     public static double standardPressure(double hKm) {
         double hp = geopotential(hKm);
         if (hp <= 11) {
@@ -66,7 +76,12 @@ public final class P835 {
         return 1e-62;
     }
 
-    /** Standard water vapour density (g/m3) with scale height 2 km and ground value 7.5 g/m3. */
+    /**
+     * Standard water vapour density with scale height 2 km and sea-level value 7.5 g/m3.
+     *
+     * @param hKm geometric height above mean sea level (km)
+     * @return water vapour density (g/m3)
+     */
     public static double standardWaterVapourDensity(double hKm) {
         return standardWaterVapourDensity(hKm, 2.0, 7.5);
     }
@@ -77,12 +92,21 @@ public final class P835 {
      * @param hKm height (km)
      * @param h0Km scale height (km)
      * @param rho0 density at sea level (g/m3)
+     * @return water vapour density (g/m3)
      */
     public static double standardWaterVapourDensity(double hKm, double h0Km, double rho0) {
         return rho0 * Math.exp(-hKm / h0Km);
     }
 
-    /** Standard water vapour partial pressure (hPa). */
+    /**
+     * Standard water vapour partial pressure, from the density of
+     * {@link #standardWaterVapourDensity(double, double, double)} and the standard temperature.
+     *
+     * @param hKm geometric height above mean sea level (km)
+     * @param h0Km water vapour scale height (km)
+     * @param rho0 water vapour density at sea level (g/m3)
+     * @return water vapour partial pressure (hPa)
+     */
     public static double standardWaterVapourPressure(double hKm, double h0Km, double rho0) {
         double rho = standardWaterVapourDensity(hKm, h0Km, rho0);
         return rho * standardTemperature(hKm) / 216.7;

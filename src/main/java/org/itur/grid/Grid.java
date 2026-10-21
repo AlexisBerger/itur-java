@@ -48,7 +48,13 @@ public final class Grid {
         this.values = values;
     }
 
-    /** Loads (or returns the cached) grid stored in the resource {@code itur/data/<name>.grid}. */
+    /**
+     * Loads (or returns the cached) grid stored in the resource {@code itur/data/<name>.grid}.
+     *
+     * @param name resource name without extension, e.g. {@code "839/v4_esa0height"}
+     * @return the grid
+     * @throws java.io.UncheckedIOException if the resource cannot be read
+     */
     public static Grid load(String name) {
         return CACHE.computeIfAbsent(name, Grid::read);
     }
@@ -81,22 +87,51 @@ public final class Grid {
         }
     }
 
+    /**
+     * Number of latitude rows.
+     *
+     * @return number of rows
+     */
     public int nlat() {
         return nlat;
     }
 
+    /**
+     * Number of longitude columns.
+     *
+     * @return number of columns
+     */
     public int nlon() {
         return nlon;
     }
 
+    /**
+     * Latitude of a row.
+     *
+     * @param i row index, 0 to {@code nlat() - 1}
+     * @return latitude (degrees)
+     */
     public double lat(int i) {
         return lat0 + i * dlat;
     }
 
+    /**
+     * Longitude of a column.
+     *
+     * @param j column index, 0 to {@code nlon() - 1}
+     * @return longitude (degrees)
+     */
     public double lon(int j) {
         return lon0 + j * dlon;
     }
 
+    /**
+     * Raw grid value.
+     *
+     * @param i row index
+     * @param j column index
+     * @return the stored value
+     */
     public double value(int i, int j) {
         return values[i * nlon + j];
     }
@@ -105,6 +140,10 @@ public final class Grid {
      * Bilinear interpolation (same behaviour as {@code scipy.interpolate.RegularGridInterpolator}
      * with {@code method="linear"}, {@code bounds_error=False}): points outside the grid, or NaN
      * coordinates, give {@code NaN}.
+     *
+     * @param lat latitude (degrees)
+     * @param lon longitude (degrees), in the longitude convention of the grid
+     * @return the interpolated value, or {@code NaN} outside the grid
      */
     public double bilinear(double lat, double lon) {
         double latMax = lat0 + (nlat - 1) * dlat;
@@ -130,6 +169,10 @@ public final class Grid {
      * implemented by ITU-Rpy. The grid must be padded by one cell on each side of the area of
      * interest (as the P.1511 and P.836 topography grids are): the interpolation point must lie
      * inside the inner area.
+     *
+     * @param lat latitude (degrees)
+     * @param lon longitude (degrees), in the longitude convention of the grid
+     * @return the interpolated value
      */
     public double bicubic(double lat, double lon) {
         int innerLat = nlat - 2;

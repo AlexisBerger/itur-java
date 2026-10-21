@@ -20,7 +20,12 @@ public final class P618 {
     private static final double EPSILON = 1e-9;
     private static final double RE = 8500; // effective Earth radius (km)
 
-    /** Log-normal fit of the rain attenuation: {@code ln A ~ N(m, sigma)}. */
+    /**
+     * Log-normal fit of the rain attenuation: {@code ln A ~ N(m, sigma)}.
+     *
+     * @param sigmaLnA standard deviation of {@code ln A}
+     * @param mLnA mean of {@code ln A}
+     */
     public record LognormalFit(double sigmaLnA, double mLnA) {
     }
 
@@ -76,11 +81,16 @@ public final class P618 {
     /**
      * Rain attenuation (dB) exceeded for {@code p} % of an average year (Section 2.2.1.1).
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
      * @param hsKm station altitude above mean sea level (km), or {@code null} to use P.1511
      * @param p percentage of time (0.001 to 5)
      * @param r001 rainfall rate exceeded for 0.01 % (mm/h), or {@code null} to use P.837
      * @param tauDeg polarization tilt angle (45 for circular)
      * @param lsKm slant path length (km), or {@code null} to compute it from the rain height
+     * @return rain attenuation exceeded for {@code p} % of the time (dB)
      */
     public static double rainAttenuation(double latDeg, double lonDeg, double fGHz, double elDeg, Double hsKm,
                                          double p, Double r001, double tauDeg, Double lsKm) {
@@ -89,7 +99,15 @@ public final class P618 {
         return a < 0 ? 0 : a;
     }
 
-    /** {@link #rainAttenuation} with default arguments ({@code p = 0.01 %}, circular polarization). */
+    /**
+     * {@link #rainAttenuation} with default arguments ({@code p = 0.01 %}, circular polarization).
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
+     * @return rain attenuation exceeded for 0.01 % of the time (dB)
+     */
     public static double rainAttenuation(double latDeg, double lonDeg, double fGHz, double elDeg) {
         return rainAttenuation(latDeg, lonDeg, fGHz, elDeg, null, 0.01, null, 45, null);
     }
@@ -97,7 +115,13 @@ public final class P618 {
     /**
      * Probability of rain attenuation (%) on the slant path (Section 2.2.1.2).
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param elDeg elevation angle (degrees)
+     * @param hsKm station altitude above mean sea level (km), or {@code null} to use P.1511
+     * @param lsKm slant path length (km), or {@code null} to compute it from the rain height
      * @param p0Percent probability of rain at the station (%), or {@code null} to use P.837
+     * @return probability of rain attenuation on the path (%)
      */
     public static double rainAttenuationProbability(double latDeg, double lonDeg, double elDeg, Double hsKm,
                                                     Double lsKm, Double p0Percent) {
@@ -117,6 +141,16 @@ public final class P618 {
     /**
      * Fits {@code ln A_rain} to a log-normal distribution (Section 2.2.1.3 / Annex), by least
      * squares over the standard exceedance probabilities lower than {@code pkPercent}.
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
+     * @param hsKm station altitude above mean sea level (km), or {@code null} to use P.1511
+     * @param pkPercent upper bound of the exceedance probabilities used in the fit (%), usually the
+     *     probability of rain
+     * @param tauDeg polarization tilt angle (degrees)
+     * @return the standard deviation and the mean of {@code ln A_rain}
      */
     public static LognormalFit fitRainAttenuationToLognormal(double latDeg, double lonDeg, double fGHz,
                                                               double elDeg, Double hsKm, double pkPercent,
@@ -166,6 +200,20 @@ public final class P618 {
     /**
      * Probability (%) that the rain attenuation exceeds both margins at two sites simultaneously
      * (site diversity, Section 2.2.4).
+     *
+     * @param lat1 latitude of site 1 (degrees)
+     * @param lon1 longitude of site 1 (degrees)
+     * @param a1Db rain attenuation margin at site 1 (dB)
+     * @param el1 elevation angle at site 1 (degrees)
+     * @param lat2 latitude of site 2 (degrees)
+     * @param lon2 longitude of site 2 (degrees)
+     * @param a2Db rain attenuation margin at site 2 (dB)
+     * @param el2 elevation angle at site 2 (degrees)
+     * @param fGHz frequency (GHz)
+     * @param tauDeg polarization tilt angle (degrees)
+     * @param hs1 altitude of site 1 (km), or {@code null} to use P.1511
+     * @param hs2 altitude of site 2 (km), or {@code null} to use P.1511
+     * @return joint outage probability (%)
      */
     public static double siteDiversityRainOutageProbability(double lat1, double lon1, double a1Db, double el1,
                                                             double lat2, double lon2, double a2Db, double el2,
@@ -194,10 +242,12 @@ public final class P618 {
      * Cross-polarization discrimination XPD_p (dB) not exceeded for p % of the time, from rain
      * attenuation {@code apDb} exceeded for the same percentage (Section 4.1).
      *
+     * @param apDb rain attenuation exceeded for {@code p} % of the time (dB)
      * @param fGHz frequency (GHz), 4 to 55
      * @param elDeg elevation angle (degrees)
      * @param p percentage of time
      * @param tauDeg polarization tilt angle (degrees)
+     * @return cross-polarization discrimination (dB)
      */
     public static double rainCrossPolarizationDiscrimination(double apDb, double fGHz, double elDeg, double p,
                                                              double tauDeg) {
@@ -258,9 +308,12 @@ public final class P618 {
     // ---- scintillation -----------------------------------------------------------------------
 
     /**
-     * Standard deviation of the signal amplitude (dB) due to tropospheric scintillation
-     * (Section 2.4.1).
+     * Standard deviation of the tropospheric scintillation (dB) (Section 2.4.1).
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
      * @param dMeters antenna diameter (m)
      * @param eta antenna efficiency (0.5 is a good default)
      * @param tCelsius average surface temperature (deg C), or {@code null}
@@ -268,6 +321,7 @@ public final class P618 {
      * @param pHPa average surface pressure (hPa), or {@code null}; when any of these three is
      *     {@code null} the wet refractivity is taken from the P.453 map
      * @param hLMeters height of the turbulent layer (m), 1000 by default
+     * @return standard deviation of the signal amplitude (dB)
      */
     public static double scintillationAttenuationSigma(double latDeg, double lonDeg, double fGHz, double elDeg,
                                                        double dMeters, double eta, Double tCelsius, Double hPercent,
@@ -293,6 +347,19 @@ public final class P618 {
     /**
      * Tropospheric scintillation fade depth (dB) exceeded for {@code p} % of the time (Section 2.4.1);
      * negative results are clipped to 0. See {@link #scintillationAttenuationSigma} for the arguments.
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param fGHz frequency (GHz)
+     * @param elDeg elevation angle (degrees)
+     * @param p percentage of time the fade depth is exceeded
+     * @param dMeters antenna diameter (m)
+     * @param eta antenna efficiency (0.5 is a good default)
+     * @param tCelsius average surface temperature (deg C), or {@code null}
+     * @param hPercent average surface relative humidity (%), or {@code null}
+     * @param pHPa average surface pressure (hPa), or {@code null}
+     * @param hLMeters height of the turbulent layer (m), 1000 by default
+     * @return scintillation fade depth (dB)
      */
     public static double scintillationAttenuation(double latDeg, double lonDeg, double fGHz, double elDeg, double p,
                                                   double dMeters, double eta, Double tCelsius, Double hPercent,

@@ -20,7 +20,13 @@ public final class Special {
     // numpy-compatible arithmetic
     // ------------------------------------------------------------------------------------
 
-    /** {@code numpy.floor_divide(a, b)} for floating point numbers. */
+    /**
+     * {@code numpy.floor_divide(a, b)} for floating point numbers.
+     *
+     * @param a dividend
+     * @param b divisor
+     * @return the floor of {@code a / b}
+     */
     public static double floorDiv(double a, double b) {
         double mod = a % b;
         double div = (a - mod) / b;
@@ -37,7 +43,13 @@ public final class Special {
         return Math.copySign(0.0, a / b);
     }
 
-    /** {@code numpy.mod(a, b)} for floating point numbers (result has the sign of {@code b}). */
+    /**
+     * {@code numpy.mod(a, b)} for floating point numbers (result has the sign of {@code b}).
+     *
+     * @param a dividend
+     * @param b divisor
+     * @return {@code a - b * floor(a / b)}
+     */
     public static double mod(double a, double b) {
         double mod = a % b;
         if (mod != 0) {
@@ -54,7 +66,12 @@ public final class Special {
     // erfc and friends
     // ------------------------------------------------------------------------------------
 
-    /** Complementary error function, accurate to about 1e-15 (relative). */
+    /**
+     * Complementary error function, accurate to about 1e-15 (relative).
+     *
+     * @param x argument
+     * @return {@code erfc(x)}
+     */
     public static double erfc(double x) {
         if (Double.isNaN(x)) {
             return Double.NaN;
@@ -110,17 +127,32 @@ public final class Special {
         return Math.exp(-x * x) / (SQRT_PI * f);
     }
 
-    /** Standard normal survival function {@code Q(x) = P(X > x)} ({@code scipy.stats.norm.sf}). */
+    /**
+     * Standard normal survival function {@code Q(x) = P(X > x)} ({@code scipy.stats.norm.sf}).
+     *
+     * @param x argument
+     * @return {@code P(X > x)}
+     */
     public static double normSf(double x) {
         return 0.5 * erfc(x / SQRT2);
     }
 
-    /** Standard normal CDF ({@code scipy.stats.norm.cdf}). */
+    /**
+     * Standard normal CDF ({@code scipy.stats.norm.cdf}).
+     *
+     * @param x argument
+     * @return {@code P(X <= x)}
+     */
     public static double normCdf(double x) {
         return 0.5 * erfc(-x / SQRT2);
     }
 
-    /** Standard normal quantile function ({@code scipy.stats.norm.ppf}). */
+    /**
+     * Standard normal quantile function ({@code scipy.stats.norm.ppf}).
+     *
+     * @param p probability, 0 to 1
+     * @return {@code x} such that {@code P(X <= x) = p}
+     */
     public static double normPpf(double p) {
         if (Double.isNaN(p) || p < 0 || p > 1) {
             return Double.NaN;
@@ -173,12 +205,27 @@ public final class Special {
     /**
      * Bisection root finder, a literal port of {@code scipy.optimize.bisect}
      * ({@code rtol = 4 * eps}, {@code maxiter = 100}).
+     *
+     * @param f function whose root is sought; {@code f(a)} and {@code f(b)} must have opposite signs
+     * @param a lower end of the bracketing interval
+     * @param b upper end of the bracketing interval
+     * @param xtol absolute tolerance on the root
+     * @return the root of {@code f} in {@code [a, b]}
      */
     public static double bisect(DoubleUnaryOperator f, double a, double b, double xtol) {
         return bisect(f, a, b, xtol, 100);
     }
 
-    /** Same as {@link #bisect(DoubleUnaryOperator, double, double, double)} with a custom iteration limit. */
+    /**
+     * Same as {@link #bisect(DoubleUnaryOperator, double, double, double)} with a custom iteration limit.
+     *
+     * @param f function whose root is sought; {@code f(a)} and {@code f(b)} must have opposite signs
+     * @param a lower end of the bracketing interval
+     * @param b upper end of the bracketing interval
+     * @param xtol absolute tolerance on the root
+     * @param maxiter maximum number of iterations
+     * @return the root of {@code f} in {@code [a, b]}
+     */
     public static double bisect(DoubleUnaryOperator f, double a, double b, double xtol, int maxiter) {
         final double rtol = 4 * Math.ulp(1.0);
         double tol = xtol + rtol * (Math.abs(a) + Math.abs(b));
@@ -251,6 +298,11 @@ public final class Special {
      *   Q(h,k;rho) = Q(h) Q(k) + 1/(2 pi) * Integral_0^asin(rho) exp(-(h^2 + k^2 - 2 h k sin t) / (2 cos^2 t)) dt
      * </pre>
      * integrated with a composite 64-point Gauss-Legendre rule.
+     *
+     * @param h first threshold
+     * @param k second threshold
+     * @param rho correlation coefficient, -1 to 1
+     * @return {@code P(X > h, Y > k)}
      */
     public static double bivariateNormalSf(double h, double k, double rho) {
         double tMax = Math.asin(rho);

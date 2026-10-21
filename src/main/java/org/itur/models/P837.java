@@ -53,14 +53,26 @@ public final class P837 {
         return new Monthly(p0, r, sum / 365.25);
     }
 
-    /** Probability of rain in an average year, P0 (%). */
+    /**
+     * Probability of rain in an average year, P0 (P.837-7).
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @return probability of rain (%)
+     */
     public static double rainfallProbability(double latDeg, double lonDeg) {
         return monthly(latDeg, lonDeg).annualP0();
     }
 
     /**
-     * Rainfall rate (mm/h) exceeded for {@code p} % of an average year. For {@code p = 0.01} the
-     * tabulated map is used; otherwise the value is found by bisection from the monthly statistics.
+     * Rainfall rate exceeded for {@code p} % of an average year (P.837-7). For {@code p = 0.01} the
+     * tabulated R0.01 map is used; otherwise the value is found by bisection from the monthly statistics.
+     * Returns 0 when {@code p} is larger than the probability of rain.
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param p percentage of an average year the rate is exceeded (%)
+     * @return rainfall rate (mm/h)
      */
     public static double rainfallRate(double latDeg, double lonDeg, double p) {
         if (p == 0.01) {
@@ -81,7 +93,15 @@ public final class P837 {
         }, 1e-10, 1000, 1e-5);
     }
 
-    /** Percentage of time (of an average year) that rainfall rate {@code rMmPerHour} is exceeded. */
+    /**
+     * Percentage of an average year during which a rainfall rate is exceeded (inverse of
+     * {@link #rainfallRate}).
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param rMmPerHour rainfall rate threshold (mm/h)
+     * @return percentage of time the rate is exceeded (%)
+     */
     public static double unavailabilityFromRainfallRate(double latDeg, double lonDeg, double rMmPerHour) {
         return Special.bisect(x -> rainfallRate(latDeg, lonDeg, x) - rMmPerHour - 1e-6, 1e-5, 100, 2e-12, 50);
     }

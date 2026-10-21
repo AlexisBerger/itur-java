@@ -17,15 +17,24 @@ public final class P1510 {
         return lon > 180 ? lon - 360 : lon;
     }
 
-    /** Annual mean surface temperature (K). */
+    /**
+     * Annual mean surface temperature (P.1510-1).
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @return annual mean surface (2 m) temperature (K)
+     */
     public static double surfaceMeanTemperature(double latDeg, double lonDeg) {
         return Grid.load("1510/v1_t_annual").bilinear(latDeg, lonFor(lonDeg));
     }
 
     /**
-     * Monthly mean surface temperature (K).
+     * Monthly mean surface temperature (P.1510-1).
      *
-     * @param month 1 (January) to 12 (December)
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param month month of the year, 1 (January) to 12 (December)
+     * @return monthly mean surface (2 m) temperature (K)
      */
     public static double surfaceMonthMeanTemperature(double latDeg, double lonDeg, int month) {
         if (month < 1 || month > 12) {

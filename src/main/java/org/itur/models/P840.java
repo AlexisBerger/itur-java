@@ -16,7 +16,13 @@ public final class P840 {
     private static final String[] SUFFIX = {"01", "02", "03", "05", "1", "2", "3", "5", "10", "20", "30", "50", "60",
         "70", "80", "90", "95", "99"};
 
-    /** Parameters of the log-normal approximation of the columnar liquid water content. */
+    /**
+     * Parameters of the log-normal approximation of the columnar liquid water content.
+     *
+     * @param m mean of {@code ln L}
+     * @param sigma standard deviation of {@code ln L}
+     * @param pclw probability of cloud liquid water (%)
+     */
     public record LognormalCoefficients(double m, double sigma, double pclw) {
     }
 
@@ -28,6 +34,10 @@ public final class P840 {
      * Total columnar content of reduced cloud liquid water (kg/m2) exceeded for {@code p} % of an
      * average year; log-interpolated between the tabulated probabilities (0.1 .. 99 %).
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param p percentage of an average year the value is exceeded (%)
+     * @return reduced columnar liquid water content (kg/m2)
      * @throws IllegalArgumentException if {@code p} is greater than 99
      */
     public static double columnarContentReducedLiquid(double latDeg, double lonDeg, double p) {
@@ -58,6 +68,7 @@ public final class P840 {
      *
      * @param fGHz frequency (GHz), up to 1000
      * @param tCelsius cloud liquid water temperature (deg C)
+     * @return specific attenuation coefficient K_l ((dB/km)/(g/m3))
      */
     public static double specificAttenuationCoefficient(double fGHz, double tCelsius) {
         if (fGHz > 1000) {
@@ -81,8 +92,14 @@ public final class P840 {
      * Cloud attenuation (dB) exceeded for {@code p} % of the time, {@code A = Lred * K_l / sin(el)},
      * with K_l evaluated at 0 deg C. Negative results are clipped to 0.
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param elDeg elevation angle (degrees)
+     * @param fGHz frequency (GHz)
+     * @param p percentage of an average year the value is exceeded (%)
      * @param lredKgPerM2 columnar content of reduced liquid water (kg/m2), or {@code null} to take
      *     it from the maps
+     * @return cloud attenuation (dB)
      */
     public static double cloudAttenuation(double latDeg, double lonDeg, double elDeg, double fGHz, double p,
                                           Double lredKgPerM2) {
@@ -92,7 +109,13 @@ public final class P840 {
         return a < 0 ? 0 : a;
     }
 
-    /** Log-normal approximation coefficients (m, sigma, P_clw) at a location. */
+    /**
+     * Log-normal approximation coefficients (m, sigma, P_clw) at a location.
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @return the coefficients of the log-normal approximation
+     */
     public static LognormalCoefficients lognormalApproximationCoefficients(double latDeg, double lonDeg) {
         double lon = Special.mod(lonDeg, 360);
         return new LognormalCoefficients(

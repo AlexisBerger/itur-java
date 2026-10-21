@@ -21,7 +21,10 @@ public final class P453 {
 
     /** Type of hydrometeor for the saturation vapour pressure. */
     public enum Hydrometeor {
-        WATER, ICE
+        /** Saturation over liquid water. */
+        WATER,
+        /** Saturation over ice. */
+        ICE
     }
 
     // ---- formulas ----------------------------------------------------------------------------
@@ -33,6 +36,7 @@ public final class P453 {
      *
      * @param eHPa water vapour partial pressure (hPa)
      * @param tCelsius temperature (deg C)
+     * @return wet term of the radio refractivity (N-units)
      */
     public static double wetTermRadioRefractivity(double eHPa, double tCelsius) {
         double tk = tCelsius + 273.15;
@@ -40,21 +44,23 @@ public final class P453 {
     }
 
     /**
-     * Dry term of the radio refractivity (N-units), Eq. 3.
+     * Dry term of the radio refractivity (N-units), Eq. 3: {@code 77.6 Pd / T}.
      *
      * @param pdHPa dry air pressure (hPa)
      * @param tKelvin temperature (K)
+     * @return dry term of the radio refractivity (N-units)
      */
     public static double dryTermRadioRefractivity(double pdHPa, double tKelvin) {
         return 77.6 * pdHPa / tKelvin;
     }
 
     /**
-     * Radio refractive index n, Eqs. 1-2.
+     * Radio refractive index n, Eqs. 1-2: {@code n = 1 + N 1e-6}.
      *
      * @param pdHPa dry air pressure (hPa)
      * @param eHPa water vapour partial pressure (hPa)
      * @param tKelvin temperature (K)
+     * @return radio refractive index (dimensionless)
      */
     public static double radioRefractiveIndex(double pdHPa, double eHPa, double tKelvin) {
         double n = 77.6 * pdHPa / tKelvin + 72 * eHPa / tKelvin + 3.75e5 * eHPa / (tKelvin * tKelvin);
@@ -66,6 +72,8 @@ public final class P453 {
      *
      * @param tCelsius temperature (deg C)
      * @param pHPa total pressure (hPa)
+     * @param type {@link Hydrometeor#WATER} or {@link Hydrometeor#ICE}
+     * @return saturation vapour pressure (hPa)
      */
     public static double saturationVapourPressure(double tCelsius, double pHPa, Hydrometeor type) {
         double t = tCelsius;
@@ -96,12 +104,21 @@ public final class P453 {
      * @param tCelsius temperature (deg C)
      * @param pHPa total pressure (hPa)
      * @param hPercent relative humidity (%)
+     * @param type hydrometeor type used for the saturation pressure
+     * @return water vapour partial pressure (hPa)
      */
     public static double waterVapourPressure(double tCelsius, double pHPa, double hPercent, Hydrometeor type) {
         return hPercent * saturationVapourPressure(tCelsius, pHPa, type) / 100;
     }
 
-    /** Water vapour pressure over water (hPa). */
+    /**
+     * Water vapour pressure over water (hPa).
+     *
+     * @param tCelsius temperature (deg C)
+     * @param pHPa total pressure (hPa)
+     * @param hPercent relative humidity (%)
+     * @return water vapour partial pressure (hPa)
+     */
     public static double waterVapourPressure(double tCelsius, double pHPa, double hPercent) {
         return waterVapourPressure(tCelsius, pHPa, hPercent, Hydrometeor.WATER);
     }
@@ -120,6 +137,11 @@ public final class P453 {
     /**
      * Wet term of the surface radio refractivity (N-units) exceeded for {@code p} % of an average
      * year, from the 0.75 deg map (log-interpolated between the tabulated probabilities).
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param p percentage of an average year the value is exceeded (%)
+     * @return wet term of the surface radio refractivity (N-units)
      */
     public static double mapWetTermRadioRefractivity(double latDeg, double lonDeg, double p) {
         double lon = Special.mod(lonDeg, 360);
@@ -184,7 +206,10 @@ public final class P453 {
      * Vertical gradient of radio refractivity in the lowest 65 m (N-units/km) exceeded for
      * {@code p} % of an average year.
      *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
      * @param p one of 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99, 99.5, 99.8, 99.9
+     * @return refractivity gradient (N-units/km)
      */
     public static double dn65(double latDeg, double lonDeg, double p) {
         return dnMap("dn65m", latDeg, lonDeg, p);
@@ -193,6 +218,11 @@ public final class P453 {
     /**
      * Vertical gradient of radio refractivity over the first km of the atmosphere (N-units/km)
      * exceeded for {@code p} % of an average year (same probability set as {@link #dn65}).
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @param p percentage of an average year the value is exceeded (%)
+     * @return refractivity gradient (N-units/km)
      */
     public static double dn1(double latDeg, double lonDeg, double p) {
         return dnMap("dn", latDeg, lonDeg, p);

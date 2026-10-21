@@ -9,7 +9,12 @@ public final class P838 {
     private P838() {
     }
 
-    /** Coefficients {@code k} and {@code alpha} of the power law {@code gamma_R = k * R^alpha}. */
+    /**
+     * Coefficients {@code k} and {@code alpha} of the power law {@code gamma_R = k * R^alpha}.
+     *
+     * @param k coefficient {@code k}
+     * @param alpha exponent {@code alpha}
+     */
     public record Coefficients(double k, double alpha) {
     }
 
@@ -52,6 +57,7 @@ public final class P838 {
      * @param fGHz frequency (GHz), 1 to 1000
      * @param elDeg path elevation angle (degrees)
      * @param tauDeg polarization tilt angle relative to the horizontal (degrees); 45 for circular
+     * @return the coefficients {@code k} and {@code alpha}
      */
     public static Coefficients coefficients(double fGHz, double elDeg, double tauDeg) {
         double lf = Math.log10(fGHz);
@@ -74,6 +80,7 @@ public final class P838 {
      * @param fGHz frequency (GHz)
      * @param elDeg elevation angle (degrees)
      * @param tauDeg polarization tilt angle (degrees)
+     * @return specific attenuation due to rain (dB/km)
      */
     public static double rainSpecificAttenuation(double rMmPerHour, double fGHz, double elDeg, double tauDeg) {
         Coefficients c = coefficients(fGHz, elDeg, tauDeg);

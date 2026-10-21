@@ -12,7 +12,14 @@ public final class P1511 {
     private P1511() {
     }
 
-    /** Topographic height above mean sea level (km), never below 1e-9 (as in ITU-Rpy). */
+    /**
+     * Topographic height of the ground above mean sea level (P.1511-1), by bicubic interpolation
+     * of the 0.5 degree map. Never below 1e-9 km, as in ITU-Rpy.
+     *
+     * @param latDeg latitude (degrees, -90 to 90)
+     * @param lonDeg longitude (degrees, -180 to 180 or 0 to 360)
+     * @return topographic altitude above mean sea level (km)
+     */
     public static double topographicAltitude(double latDeg, double lonDeg) {
         double lon = Special.mod(lonDeg, 360);
         double val = Grid.load("1511/v1_topo_0dot5").bicubic(latDeg, lon);
