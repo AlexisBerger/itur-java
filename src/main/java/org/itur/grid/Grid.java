@@ -1,4 +1,4 @@
-package org.itur;
+package org.itur.grid;
 
 import java.io.DataInputStream;
 import java.io.IOException;

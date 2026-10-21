@@ -1,4 +1,7 @@
-package org.itur;
+package org.itur.models;
+
+import org.itur.util.Geodesy;
+import org.itur.util.Special;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;

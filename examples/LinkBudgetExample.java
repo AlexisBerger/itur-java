@@ -1,8 +1,8 @@
 import org.itur.Itur;
-import org.itur.P618;
-import org.itur.P676;
-import org.itur.P837;
-import org.itur.P838;
+import org.itur.models.P618;
+import org.itur.models.P676;
+import org.itur.models.P837;
+import org.itur.models.P838;
 
 /**
  * Run (after "mvn package"):

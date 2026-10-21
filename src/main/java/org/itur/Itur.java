@@ -1,5 +1,13 @@
 package org.itur;
 
+import org.itur.models.P1510;
+import org.itur.models.P1511;
+import org.itur.models.P618;
+import org.itur.models.P676;
+import org.itur.models.P835;
+import org.itur.models.P836;
+import org.itur.models.P840;
+
 /**
  * Total atmospheric attenuation of an Earth-space path, combining gases (P.676-13), clouds (P.840-7),
  * rain (P.618-13) and scintillation (P.618-13) as recommended by P.618-13 Section 2.5:

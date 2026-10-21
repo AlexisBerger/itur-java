@@ -1,4 +1,7 @@
-package org.itur;
+package org.itur.models;
+
+import org.itur.grid.Grid;
+import org.itur.util.Special;
 
 /**
  * Recommendation ITU-R P.837-7 (06/2017): characteristics of precipitation for propagation

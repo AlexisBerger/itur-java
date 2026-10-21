@@ -1,4 +1,4 @@
-package org.itur;
+package org.itur.util;
 
 /** Geodesic distance on the WGS84 ellipsoid (Vincenty's inverse formula, sub-millimetre accuracy). */
 public final class Geodesy {

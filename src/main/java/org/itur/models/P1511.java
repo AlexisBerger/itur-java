@@ -1,4 +1,7 @@
-package org.itur;
+package org.itur.models;
+
+import org.itur.grid.Grid;
+import org.itur.util.Special;
 
 /**
  * Recommendation ITU-R P.1511-1 (07/2015): topography for Earth-space propagation modelling.

@@ -1,4 +1,7 @@
-package org.itur;
+package org.itur.models;
+
+import org.itur.grid.Grid;
+import org.itur.util.Special;
 
 /**
  * Recommendation ITU-R P.836-6 (12/2017): water vapour, surface density and total columnar content.

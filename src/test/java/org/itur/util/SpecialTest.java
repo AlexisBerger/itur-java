@@ -1,4 +1,4 @@
-package org.itur;
+package org.itur.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

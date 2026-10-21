@@ -18,6 +18,15 @@ Implémentation Java (cible Java 25, sans dépendance d'exécution) de modèles 
 | P.1511-1 | Altitude topographique (bicubique) | `P1511` |
 | (P.835) | Atmosphère standard (dépendance de P.676/P.836) | `P835` |
 
+## Organisation des packages
+
+| Package | Contenu |
+|---|---|
+| `org.itur` | `Itur` : calcul composé (gaz + nuages + pluie + scintillation) |
+| `org.itur.models` | une classe par recommandation (`P618`, `P676`, `P837`, …) |
+| `org.itur.grid` | `Grid` : cartes lat/lon, interpolations bilinéaire et bicubique |
+| `org.itur.util` | `Special` (fonctions spéciales, bissection), `Geodesy` |
+
 `Itur.atmosphericAttenuationSlantPath(...)` compose gaz + nuages + pluie + scintillation (`A = Ag + sqrt((Ar+Ac)² + As²)`).
 
 > **Versions** : ITU-Rpy a déjà des versions plus récentes pour P.618 (-14), P.840 (-9) et P.1511 (-2). Les versions demandées ont été implémentées telles quelles ; la mise à niveau est possible (les données sont disponibles).
@@ -25,7 +34,7 @@ Implémentation Java (cible Java 25, sans dépendance d'exécution) de modèles 
 ## Démarrage rapide
 
 ```java
-import org.itur.*;
+import org.itur.Itur;
 
 var a = Itur.atmosphericAttenuationSlantPath(48.85, 2.35, 20.0, 35.0, 0.1, 1.2, Itur.Options.defaults());
 System.out.println(a.total() + " dB");

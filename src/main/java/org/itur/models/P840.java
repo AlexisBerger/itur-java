@@ -1,4 +1,7 @@
-package org.itur;
+package org.itur.models;
+
+import org.itur.grid.Grid;
+import org.itur.util.Special;
 
 /**
  * Recommendation ITU-R P.840-7 (12/2017): attenuation due to clouds and fog.

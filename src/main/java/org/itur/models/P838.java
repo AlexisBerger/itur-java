@@ -1,4 +1,4 @@
-package org.itur;
+package org.itur.models;
 
 /**
  * Recommendation ITU-R P.838-3 (03/2005): specific attenuation model for rain for use in

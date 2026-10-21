@@ -1,4 +1,4 @@
-package org.itur;
+package org.itur.util;
 
 import java.util.function.DoubleUnaryOperator;
 

@@ -1,4 +1,7 @@
-package org.itur;
+package org.itur.models;
+
+import org.itur.grid.Grid;
+import org.itur.util.Special;
 
 /**
  * Recommendation ITU-R P.1510-1 (06/2017): mean surface temperature (2 m above ground),

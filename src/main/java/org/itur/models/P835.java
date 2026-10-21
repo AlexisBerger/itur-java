@@ -1,4 +1,4 @@
-package org.itur;
+package org.itur.models;
 
 /**
  * Recommendation ITU-R P.835-6 (12/2017), Annex 1: reference standard atmosphere
