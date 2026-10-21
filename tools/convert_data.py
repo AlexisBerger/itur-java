@@ -12,7 +12,7 @@ Grid file layout (all big-endian, whole file GZIP-compressed):
     float32 values[nlat * nlon]  row-major, row 0 = lat0
 
 Only the datasets needed by the recommended versions are converted:
-P.453-13, P.836-6, P.837-7, P.839-4, P.840-7, P.1510-1, P.1511-1 (+ P.676-11 line tables).
+P.453-13, P.836-6, P.837-7, P.839-4, P.840-7, P.1510-1, P.1511-1 (+ P.676-13 line tables).
 """
 import gzip, os, shutil, struct, sys
 import numpy as np
@@ -90,9 +90,9 @@ def main(src, dst):
             name = stem % (ip, fp)
             add('453', write_grid(dst, f'453/{name}', la, lo, load(src, f'453/{name}.npz')))
 
-    # P.676-11 line tables (plain text) -------------------------------------------
+    # P.676-13 line tables and oxygen equivalent-height coefficients (plain text) -------------------------------------------
     os.makedirs(os.path.join(dst, '676'), exist_ok=True)
-    for n in ('v11_lines_oxygen.txt', 'v11_lines_water_vapour.txt'):
+    for n in ('v13_lines_oxygen.txt', 'v13_lines_water_vapour.txt', 'v13_h0_coefficients.txt'):
         shutil.copyfile(os.path.join(src, '676', n), os.path.join(dst, '676', n))
 
     total = 0

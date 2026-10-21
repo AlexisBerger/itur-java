@@ -42,11 +42,11 @@ class ReferenceValuesTest {
     @Test
     void totalAttenuationAndItsParts() {
         Itur.Attenuation a = Itur.atmosphericAttenuationSlantPath(LAT, LON, 20.0, 35.0, 0.1, 1.2);
-        close(0.9436494914071086, a.gas());
+        close(0.951750166540952, a.gas());
         close(0.7798277557541271, a.cloud());
         close(4.135289905021819, a.rain());
         close(0.45405626235634355, a.scintillation());
-        close(5.879695349040181, a.total());
+        close(5.887796024174024, a.total());
         assertEquals(a.gas() + Math.sqrt(Math.pow(a.rain() + a.cloud(), 2) + a.scintillation() * a.scintillation()),
             a.total(), 1e-12);
     }
@@ -64,7 +64,7 @@ class ReferenceValuesTest {
 
     @Test
     void gasesAndCrossPolarization() {
-        close(0.4400936637901691, P676.gaseousAttenuationSlantPath(20.0, 35.0, 7.5, 1013.25, 288.15, null, null,
+        close(0.4371288276576934, P676.gaseousAttenuationSlantPath(20.0, 35.0, 7.5, 1013.25, 288.15, null, null,
             P676.Mode.EXACT));
         close(24.819203161661413, P618.rainCrossPolarizationDiscrimination(5.0, 20.0, 35.0, 0.01, 45.0));
     }

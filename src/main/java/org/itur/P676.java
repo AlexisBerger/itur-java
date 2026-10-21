@@ -10,16 +10,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Recommendation ITU-R P.676-11 (09/2016): attenuation by atmospheric gases. Provides the
- * line-by-line specific attenuation (Annex 1), the approximate method (Annex 2) and the slant,
- * inclined and terrestrial path attenuations.
+ * Recommendation ITU-R P.676-13 (08/2022): attenuation by atmospheric gases. Provides the
+ * line-by-line specific attenuation (Annex 1), the simplified slant-path method (Annex 2) and the
+ * slant, inclined and terrestrial path attenuations.
+ *
+ * <p>Differences with P.676-11: the equivalent heights come from a tabulated oxygen height and an
+ * analytical water-vapour height, the zenith water-vapour attenuation uses new coefficients, the
+ * ray tracing evaluates the atmosphere at layer mid-points with the dry-air pressure, and the
+ * explicit approximations of the specific attenuation were removed (the line-by-line values are
+ * used instead).
  */
 public final class P676 {
 
     private P676() {
     }
 
-    /** Calculation method: {@link #APPROX} (Annex 2) or {@link #EXACT} (Annex 1, line by line). */
+    /**
+     * Calculation method: {@link #APPROX} (Annex 2, equivalent heights) or {@link #EXACT}
+     * (Annex 1, ray tracing with the line-by-line specific attenuation).
+     */
     public enum Mode {
         APPROX, EXACT
     }
@@ -30,10 +39,18 @@ public final class P676 {
 
     // ---- spectroscopic data -------------------------------------------------------------------
 
-    private static final double[][] OX = readTable("/itur/data/676/v11_lines_oxygen.txt");
-    private static final double[][] WV = readTable("/itur/data/676/v11_lines_water_vapour.txt");
-    /** Water vapour lines kept by the approximate model (rows marked with an asterisk in Table 2). */
-    private static final int[] APPROX_ROWS = {0, 3, 4, 5, 7, 12, 20, 24, 34};
+    private static final double[][] OX = readTable("/itur/data/676/v13_lines_oxygen.txt");
+    private static final double[][] WV = readTable("/itur/data/676/v13_lines_water_vapour.txt");
+    /** Annex 2 Part 1 oxygen equivalent-height coefficients: f, a0, b0, c0, d0 (1 to 350 GHz). */
+    private static final double[][] H0 = readTable("/itur/data/676/v13_h0_coefficients.txt");
+    /** Annex 2 Table 4: water-vapour equivalent height, {@code (fi, ai, bi)} per line. */
+    private static final double[][] HW_LINES = {
+        {22.235080, 2.6846, 2.7649},
+        {183.310087, 5.8905, 4.9219},
+        {325.152888, 2.9810, 3.0748},
+    };
+
+    private static final System.Logger LOG = System.getLogger(P676.class.getName());
 
     private static double[][] readTable(String resource) {
         try (InputStream in = P676.class.getResourceAsStream(resource)) {
@@ -106,71 +123,84 @@ public final class P676 {
         return gamma0Exact(fGHz, pHPa, rho, tKelvin) + gammaWExact(fGHz, pHPa, rho, tKelvin);
     }
 
-    /** Specific attenuation of dry air (dB/km), approximate method (Annex 2). */
+    /**
+     * P.676-13 has no explicit approximation of the dry-air specific attenuation: like ITU-Rpy,
+     * this returns the <b>total</b> line-by-line {@link #gammaExact} (dry air + water vapour).
+     *
+     * @deprecated use {@link #gamma0Exact}
+     */
+    @Deprecated
     public static double gamma0Approx(double fGHz, double pHPa, double rho, double tKelvin) {
-        double theta = 300 / tKelvin;
-        double e = rho * tKelvin / 216.7;
-        double sum = 0;
-        for (double[] l : OX) {
-            double fOx = l[0];
-            double dF = l[3] * 1e-4 * (pHPa * Math.pow(theta, 0.8 - l[4]) + 1.1 * e * theta);
-            double delta = (l[5] + l[6] * theta) * 1e-4 * (pHPa + e) * Math.pow(theta, 0.8);
-            double fi = fGHz / fOx * ((dF - delta * (fOx - fGHz)) / ((fOx - fGHz) * (fOx - fGHz) + dF * dF)
-                + (dF - delta * (fOx + fGHz)) / ((fOx + fGHz) * (fOx + fGHz) + dF * dF));
-            double si = l[1] * 1e-7 * pHPa * Math.pow(theta, 3) * Math.exp(l[2] * (1 - theta));
-            sum += si * fi;
-        }
-        double d = 0.00056 * (pHPa + e) * Math.pow(theta, 0.8);
-        double nd = fGHz * pHPa * theta * theta * (6.14e-5 / (d * (1 + Math.pow(fGHz / d, 2)))
-            + 1.4e-12 * pHPa * Math.pow(theta, 1.5) / (1 + 1.9e-5 * Math.pow(fGHz, 1.5)));
-        return 0.182 * fGHz * (sum + nd);
+        LOG.log(System.Logger.Level.WARNING, "ITU-R P.676-13 has no approximation of gamma_0; "
+            + "the line-by-line total specific attenuation is returned");
+        return gammaExact(fGHz, pHPa, rho, tKelvin);
     }
 
-    /** Specific attenuation of water vapour (dB/km), approximate method (Annex 2). */
+    /**
+     * P.676-13 has no explicit approximation of the water-vapour specific attenuation: like
+     * ITU-Rpy, this returns the <b>total</b> line-by-line {@link #gammaExact}.
+     *
+     * @deprecated use {@link #gammaWExact}
+     */
+    @Deprecated
     public static double gammaWApprox(double fGHz, double pHPa, double rho, double tKelvin) {
-        double theta = 300 / tKelvin;
-        double e = rho * tKelvin / 216.7;
-        double sum = 0;
-        for (int row : APPROX_ROWS) {
-            double[] l = WV[row];
-            double fWv = l[0];
-            double dF = l[3] * 0.0001 * (pHPa * Math.pow(theta, l[4]) + l[5] * e * Math.pow(theta, l[6]));
-            double fi = fGHz / fWv * (dF / ((fWv - fGHz) * (fWv - fGHz) + dF * dF)
-                + dF / ((fWv + fGHz) * (fWv + fGHz) + dF * dF));
-            double si = l[1] * 0.1 * e * Math.pow(theta, 3.5) * Math.exp(l[2] * (1 - theta));
-            sum += si * fi;
-        }
-        return 0.182 * fGHz * sum;
+        LOG.log(System.Logger.Level.WARNING, "ITU-R P.676-13 has no approximation of gamma_w; "
+            + "the line-by-line total specific attenuation is returned");
+        return gammaExact(fGHz, pHPa, rho, tKelvin);
     }
 
     // ---- equivalent heights, zenith water vapour -------------------------------------------------
 
-    /**
-     * Equivalent heights for oxygen and water vapour (Annex 2, Eqs. 30-31).
-     *
-     * @param pHPa total (barometric) pressure plus water vapour pressure, {@code P + e} (hPa)
-     */
-    public static Heights slantInclinedPathEquivalentHeight(double fGHz, double pHPa) {
-        double f = fGHz;
-        double rp = pHPa / 1013.25;
-        double t1 = 4.64 / (1 + 0.066 * Math.pow(rp, -2.3))
-            * Math.exp(-Math.pow((f - 59.7) / (2.87 + 12.4 * Math.exp(-7.9 * rp)), 2));
-        double t2 = 0.14 * Math.exp(2.12 * rp) / (Math.pow(f - 118.75, 2) + 0.031 * Math.exp(2.2 * rp));
-        double t3 = 0.0114 / (1 + 0.14 * Math.pow(rp, -2.6)) * f * (-0.0247 + 0.0001 * f + 1.61e-6 * f * f)
-            / (1 - 0.0169 * f + 4.1e-5 * f * f + 3.2e-7 * f * f * f);
-        double h0 = 6.1 / (1 + 0.17 * Math.pow(rp, -1.1)) * (1 + t1 + t2 + t3);
-        if (f < 70) {
-            h0 = Math.min(h0, 10.7 * Math.pow(rp, 0.3));
+    /** {@code numpy.interp}: linear interpolation, clamped to the end values outside the table. */
+    private static double interp(double x, int col) {
+        int n = H0.length;
+        if (x <= H0[0][0]) {
+            return H0[0][col];
         }
-        double sigmaW = 1.013 / (1 + Math.exp(-8.6 * (rp - 0.57)));
-        double hw = 1.66 * (1 + 1.39 * sigmaW / (Math.pow(f - 22.235, 2) + 2.56 * sigmaW)
-            + 3.37 * sigmaW / (Math.pow(f - 183.31, 2) + 4.69 * sigmaW)
-            + 1.58 * sigmaW / (Math.pow(f - 325.1, 2) + 2.89 * sigmaW));
+        if (x >= H0[n - 1][0]) {
+            return H0[n - 1][col];
+        }
+        int lo = 0;
+        int hi = n - 1;
+        while (hi - lo > 1) {
+            int mid = (lo + hi) >>> 1;
+            if (H0[mid][0] <= x) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        double x0 = H0[lo][0];
+        double x1 = H0[hi][0];
+        double slope = (H0[hi][col] - H0[lo][col]) / (x1 - x0);
+        return slope * (x - x0) + H0[lo][col];
+    }
+
+    /**
+     * Equivalent heights for oxygen and water vapour (Annex 2, Eqs. 31 and 37).
+     *
+     * <p>{@code h0 = a0(f) + b0(f) T + c0(f) Ps + d0(f) rho} with the coefficients interpolated
+     * linearly in the tabulated frequencies and {@code Ps = P + e} the total pressure;
+     * {@code hw = A f + B + sum_i ai / ((f - fi)^2 + bi)}.
+     *
+     * @param pHPa dry-air pressure {@code P} (hPa)
+     * @param rho water vapour density (g/m3)
+     * @param tKelvin temperature (K)
+     */
+    public static Heights slantInclinedPathEquivalentHeight(double fGHz, double pHPa, double rho,
+                                                            double tKelvin) {
+        double e = rho * tKelvin / 216.7;
+        double ps = pHPa + e;
+        double h0 = interp(fGHz, 1) + interp(fGHz, 2) * tKelvin + interp(fGHz, 3) * ps + interp(fGHz, 4) * rho;
+        double hw = 5.6585e-5 * fGHz + 1.8348;
+        for (double[] l : HW_LINES) {
+            hw += l[1] / ((fGHz - l[0]) * (fGHz - l[0]) + l[2]);
+        }
         return new Heights(h0, hw);
     }
 
     /**
-     * Zenith attenuation due to water vapour (dB), Section 2.3 of the Recommendation.
+     * Zenith attenuation due to water vapour (dB), Annex 2 Section 2.3.
      *
      * @param p percentage of time (used only to look up the water vapour content)
      * @param vtKgPerM2 integrated water vapour content (kg/m2), or {@code null} to take it from P.836
@@ -179,19 +209,19 @@ public final class P676 {
     public static double zenithWaterVapourAttenuation(double latDeg, double lonDeg, double p, double fGHz,
                                                      Double vtKgPerM2, Double hKm) {
         final double fRef = 20.6;
-        final double pRef = 815;
+        final double pRef = 845;
         double h = hKm != null ? hKm : P1511.topographicAltitude(latDeg, lonDeg);
         double vt = vtKgPerM2 != null ? vtKgPerM2 : P836.totalWaterVapourContent(latDeg, lonDeg, p, h);
-        double rhoRef = vt / 3.67;
-        double tRef = 14 * Math.log(0.22 * vt / 3.67) + 3;
+        double rhoRef = vt / 2.38;
+        double tRef = 14 * Math.log(0.22 * vt / 2.38) + 3;
         double f = fGHz;
         double a = 0.2048 * Math.exp(-Math.pow((f - 22.43) / 3.097, 2))
             + 0.2326 * Math.exp(-Math.pow((f - 183.5) / 4.096, 2))
-            + 0.2073 * Math.exp(-Math.pow((f - 325) / 3.651, 2)) - 0.113;
-        double b = 87410.0 * Math.exp(-0.587 * f) + 312.2 * Math.pow(f, -2.38) + 0.723;
-        h = Math.min(h, 4);
-        double term1 = 0.0176 * vt * gammaWApprox(f, pRef, rhoRef, tRef + 273.15)
-            / gammaWApprox(fRef, pRef, rhoRef, tRef + 273.15);
+            + 0.2073 * Math.exp(-Math.pow((f - 325) / 3.651, 2)) - 0.1113;
+        double b = 8.741e4 * Math.exp(-0.587 * f) + 312.2 * Math.pow(f, -2.38) + 0.723;
+        h = Math.max(0, Math.min(h, 4));
+        double term1 = 0.0176 * vt * gammaWExact(f, pRef, rhoRef, tRef + 273.15)
+            / gammaWExact(fRef, pRef, rhoRef, tRef + 273.15);
         return f < 20 ? term1 : term1 * (a * Math.pow(h, b) + 1);
     }
 
@@ -200,9 +230,7 @@ public final class P676 {
     /** Attenuation (dB) on a terrestrial path of {@code rKm} km. */
     public static double gaseousAttenuationTerrestrialPath(double rKm, double fGHz, double elDeg, double rho,
                                                            double pHPa, double tKelvin, Mode mode) {
-        if (mode == Mode.APPROX) {
-            return (gamma0Approx(fGHz, pHPa, rho, tKelvin) + gammaWApprox(fGHz, pHPa, rho, tKelvin)) * rKm;
-        }
+        // P.676-13 has no separate approximation: both modes use the line-by-line method
         return gammaExact(fGHz, pHPa, rho, tKelvin) * rKm;
     }
 
@@ -220,10 +248,9 @@ public final class P676 {
                                                      double tKelvin, Double vtKgPerM2, Double hKm, Mode mode) {
         double val;
         if (mode == Mode.APPROX) {
-            double g0 = gamma0Approx(fGHz, pHPa, rho, tKelvin);
-            double gw = gammaWApprox(fGHz, pHPa, rho, tKelvin);
-            double e = rho * tKelvin / 216.7;
-            Heights hh = slantInclinedPathEquivalentHeight(fGHz, pHPa + e);
+            double g0 = gamma0Exact(fGHz, pHPa, rho, tKelvin);
+            double gw = gammaWExact(fGHz, pHPa, rho, tKelvin);
+            Heights hh = slantInclinedPathEquivalentHeight(fGHz, pHPa, rho, tKelvin);
             double aw = (vtKgPerM2 != null && hKm != null)
                 ? zenithWaterVapourAttenuation(Double.NaN, Double.NaN, Double.NaN, fGHz, vtKgPerM2, hKm)
                 : gw * hh.hw();
@@ -240,6 +267,7 @@ public final class P676 {
         final int n = 922;
         double denom = Math.exp(1.0 / 100.0) - 1.0;
         double[] h = new double[n];
+        double[] hMid = new double[n];
         double[] delta = new double[n];
         double[] temp = new double[n];
         double[] press = new double[n];
@@ -248,9 +276,11 @@ public final class P676 {
         for (int i = 0; i < n; i++) {
             delta[i] = 0.0001 * Math.exp(i / 100.0);
             h[i] = 0.0001 * ((Math.exp(i / 100.0) - 1.0) / denom);
-            temp[i] = P835.standardTemperature(h[i]);
-            press[i] = P835.standardPressure(h[i]);
-            rho[i] = P835.standardWaterVapourDensity(h[i], 2.0, rho0);
+            // the atmosphere is evaluated at the layer mid-point (P.676-13 Annex 1)
+            hMid[i] = h[i] + delta[i] / 2;
+            temp[i] = P835.standardTemperature(hMid[i]);
+            press[i] = P835.standardPressure(hMid[i]);
+            rho[i] = P835.standardWaterVapourDensity(hMid[i], 2.0, rho0);
             double e = rho[i] * temp[i] / 216.7;
             refr[i] = P453.radioRefractiveIndex(press[i], e, temp[i]);
         }
@@ -265,10 +295,11 @@ public final class P676 {
             // a = s - x. For x > 0 this subtracts two nearly equal numbers (~4500 km each, difference
             // ~1e-4 km), losing ~8 digits; the algebraically identical (s^2 - x^2)/(s + x) does not.
             double a = x > 0 ? (2 * r * delta[i] + delta[i] * delta[i]) / (x + s) : s - x;
-            double arg = (-a * a - 2 * r * delta[i] - delta[i] * delta[i]) / (2 * a * r + 2 * a * delta[i]);
-            arg = Math.max(-1, Math.min(1, arg));
-            double alpha = Math.PI - Math.acos(arg);
-            total += a * gammaExact(fGHz, press[i], rho[i], temp[i]);
+            // Eq. 18b
+            double alpha = Math.asin(Math.max(-1, Math.min(1, r / (r + delta[i]) * Math.sin(b))));
+            // the specific attenuation takes the dry-air pressure (total pressure minus e)
+            double pDry = press[i] - rho[i] * temp[i] / 216.7;
+            total += a * gammaExact(fGHz, pDry, rho[i], temp[i]);
             b = Math.asin(Math.sin(alpha) * nRatio);
         }
         return total;
@@ -289,14 +320,13 @@ public final class P676 {
         double rhoUsed = rho;
         if (mode == Mode.APPROX) {
             rhoUsed = rho * Math.exp(h1Km / 2);
-            g0 = gamma0Approx(fGHz, pHPa, rhoUsed, tKelvin);
-            gw = gammaWApprox(fGHz, pHPa, rhoUsed, tKelvin);
+            g0 = gamma0Exact(fGHz, pHPa, rhoUsed, tKelvin);
+            gw = gammaWExact(fGHz, pHPa, rhoUsed, tKelvin);
         } else {
             g0 = gamma0Exact(fGHz, pHPa, rho, tKelvin);
             gw = 0;
         }
-        double e = rhoUsed * tKelvin / 216.7;
-        Heights hh = slantInclinedPathEquivalentHeight(fGHz, pHPa + e);
+        Heights hh = slantInclinedPathEquivalentHeight(fGHz, pHPa, rhoUsed, tKelvin);
         double h0 = hh.h0();
         double hw = hh.hw();
         if (5 < elDeg && elDeg < 90) {

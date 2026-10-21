@@ -1,7 +1,7 @@
 package org.itur;
 
 /**
- * Total atmospheric attenuation of an Earth-space path, combining gases (P.676-11), clouds (P.840-7),
+ * Total atmospheric attenuation of an Earth-space path, combining gases (P.676-13), clouds (P.840-7),
  * rain (P.618-13) and scintillation (P.618-13) as recommended by P.618-13 Section 2.5:
  * {@code A = A_gas + sqrt((A_rain + A_cloud)^2 + A_scint^2)}.
  *

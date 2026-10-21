@@ -35,7 +35,7 @@ if ROUND_DATA_TO_FLOAT32:
             _m.load_data = _load
 
 # Versions covered by this library
-m618.change_version(13); m676.change_version(11); m838.change_version(3); m839.change_version(4)
+m618.change_version(13); m676.change_version(13); m838.change_version(3); m839.change_version(4)
 m453.change_version(13); m836.change_version(6); m837.change_version(7); m840.change_version(7)
 m1510.change_version(1); m1511.change_version(1); m835.change_version(6)
 
@@ -173,9 +173,9 @@ def gen_gas(outdir):
             g.add('ge', (f, P, rho, T), lambda: fv(m676.gamma_exact(f, P, rho, T)))
             g.add('g0a', (f, P, rho, T), lambda: fv(m676.gamma0_approx(f, P, rho, T)))
             g.add('gwa', (f, P, rho, T), lambda: fv(m676.gammaw_approx(f, P, rho, T)))
-        for P in (1013.25, 850.0, 600.0):
-            g.add('h0', (f, P), lambda: np.asarray(m676.slant_inclined_path_equivalent_height(f, P).value if hasattr(m676.slant_inclined_path_equivalent_height(f, P), 'value') else m676.slant_inclined_path_equivalent_height(f, P)).reshape(-1)[0])
-            g.add('hw', (f, P), lambda: np.asarray(m676.slant_inclined_path_equivalent_height(f, P).value if hasattr(m676.slant_inclined_path_equivalent_height(f, P), 'value') else m676.slant_inclined_path_equivalent_height(f, P)).reshape(-1)[1])
+        for P, rho, T in ATM[:3]:
+            g.add('h0', (f, P, rho, T), lambda: fv(m676.slant_inclined_path_equivalent_height(f, P, rho, T)[0]))
+            g.add('hw', (f, P, rho, T), lambda: fv(m676.slant_inclined_path_equivalent_height(f, P, rho, T)[1]))
         for el in (5, 12, 30, 60, 90):
             for P, rho, T in ATM[:3]:
                 g.add('slant_a', (f, el, rho, P, T), lambda: fv(m676.gaseous_attenuation_slant_path(f, el, rho, P, T, mode='approx')))

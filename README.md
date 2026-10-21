@@ -7,7 +7,7 @@ Implémentation Java (cible Java 25, sans dépendance d'exécution) de modèles 
 | Rec. | Objet | Classe |
 |---|---|---|
 | P.618-13 | Affaiblissement pluie, scintillation, XPD, diversité de site | `P618` |
-| P.676-11 | Affaiblissement gazeux (raie par raie + approché, trajet exact par tracé de rayon) | `P676` |
+| P.676-13 | Affaiblissement gazeux (raie par raie, hauteurs équivalentes Annexe 2, trajet exact par tracé de rayon) | `P676` |
 | P.837-7 | Intensité de pluie | `P837` |
 | P.838-3 | Affaiblissement linéique de la pluie | `P838` |
 | P.839-4 | Hauteur de pluie / isotherme 0 °C | `P839` |
@@ -20,7 +20,7 @@ Implémentation Java (cible Java 25, sans dépendance d'exécution) de modèles 
 
 `Itur.atmosphericAttenuationSlantPath(...)` compose gaz + nuages + pluie + scintillation (`A = Ag + sqrt((Ar+Ac)² + As²)`).
 
-> **Versions** : ITU-Rpy a déjà des versions plus récentes pour P.618 (-14), P.676 (-13), P.840 (-9) et P.1511 (-2). Les versions demandées ont été implémentées telles quelles ; la mise à niveau est possible (les données sont disponibles).
+> **Versions** : ITU-Rpy a déjà des versions plus récentes pour P.618 (-14), P.840 (-9) et P.1511 (-2). Les versions demandées ont été implémentées telles quelles ; la mise à niveau est possible (les données sont disponibles).
 
 ## Démarrage rapide
 
@@ -32,7 +32,7 @@ System.out.println(a.total() + " dB");
 ```
 
 Exemple exécutable : `java -cp target/classes examples/LinkBudgetExample.java`
-(Paris, 20 GHz, 35°, p = 0,1 %, 1,2 m : gaz 0,94 ; nuages 0,78 ; pluie 4,14 ; scintillation 0,45 ; total 5,88 dB).
+(Paris, 20 GHz, 35°, p = 0,1 %, 1,2 m : gaz 0,95 ; nuages 0,78 ; pluie 4,14 ; scintillation 0,45 ; total 5,89 dB).
 
 Conventions : latitude/longitude en degrés, fréquence en GHz, hauteurs en km, probabilités `p` en %, API scalaire, `Double` nullable = valeur optionnelle (calculée depuis les cartes si `null`).
 
@@ -48,7 +48,8 @@ Les données ITU sont soumises aux conditions d'utilisation de l'UIT.
 
 ~11 000 vecteurs (villes, points aléatoires, points limites : pôles, ±180°, 360°) comparés à ITU-Rpy, tolérance relative 1e-9 :
 
-- Tout passe à ≤ 1e-13, sauf P.676 trajet exact (≤ 3,6e-8, annulation numérique côté Python) et P.618 quantiles (≤ 2,4e-7) : tolérance documentée de 2e-7 / 2e-5.
+- Tout passe à ≤ 1e-11, sauf P.618 quantiles (≤ 2,4e-7) : tolérance documentée de 2e-5.
+- P.676-13 est aussi validée contre les tableaux officiels de l'UIT (`src/test/resources/official/676`, test `P676OfficialTablesTest`) : γ0/γw/γ (350 lignes), A_gas Annexe 2 (10 lignes) et la feuille A1 (28 GHz, 30°), à moins de 5e-6.
 - Les données sont arrondies en float32 des deux côtés pour comparer les mêmes entrées ; `ReferenceValuesTest` vérifie en float64 à 1e-5.
 
 ## Écarts connus (reproduits d'ITU-Rpy)
@@ -58,6 +59,7 @@ Les données ITU sont soumises aux conditions d'utilisation de l'UIT.
 - `NaN` aux limites de grille (ex. lat = -90° pour P.836/P.453), comme ITU-Rpy.
 - P.840 : erreur pour p > 99 %; P.840-7 sans affaiblissement lognormal.
 - P.835 : atmosphère standard de référence uniquement.
+- P.676-13 : pas d'approximation explicite de γ0/γw ; `gamma0Approx`/`gammaWApprox` (dépréciées) renvoient le γ total raie par raie, comme ITU-Rpy ; les modes `APPROX`/`EXACT` des trajets terrestres sont donc identiques.
 
 ## Build
 

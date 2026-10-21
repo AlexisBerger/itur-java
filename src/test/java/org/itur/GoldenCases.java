@@ -45,11 +45,7 @@ final class GoldenCases {
                 continue;
             }
             n++;
-            // ITU-Rpy evaluates the layer path length of the exact (ray-traced) slant path as a
-            // difference of two ~4500 km numbers (result ~1e-4 km): it loses ~8 digits and its output
-            // depends on the platform's cos(). This library uses the algebraically identical stable
-            // form, which agrees with the same formula evaluated in Python to 1e-15.
-            double tol = (fn.equals("slant_e") || fn.equals("itur.total_exact")) ? Math.max(relTol, 2e-7) : relTol;
+            double tol = relTol;
             if (!close(got, expected, tol, absTol)) {
                 failures.add(line + "  -> got " + got);
             }
@@ -87,6 +83,7 @@ final class GoldenCases {
     }
 
     // ---------------------------------------------------------------------------------------
+    @SuppressWarnings("deprecation")
     static double eval(String file, String fn, double[] a) {
         return switch (file) {
             case "p838" -> switch (fn) {
@@ -151,8 +148,8 @@ final class GoldenCases {
                 case "ge" -> P676.gammaExact(a[0], a[1], a[2], a[3]);
                 case "g0a" -> P676.gamma0Approx(a[0], a[1], a[2], a[3]);
                 case "gwa" -> P676.gammaWApprox(a[0], a[1], a[2], a[3]);
-                case "h0" -> P676.slantInclinedPathEquivalentHeight(a[0], a[1]).h0();
-                case "hw" -> P676.slantInclinedPathEquivalentHeight(a[0], a[1]).hw();
+                case "h0" -> P676.slantInclinedPathEquivalentHeight(a[0], a[1], a[2], a[3]).h0();
+                case "hw" -> P676.slantInclinedPathEquivalentHeight(a[0], a[1], a[2], a[3]).hw();
                 case "slant_a" -> P676.gaseousAttenuationSlantPath(a[0], a[1], a[2], a[3], a[4], null, null, P676.Mode.APPROX);
                 case "slant_a_vt" -> P676.gaseousAttenuationSlantPath(a[0], a[1], a[2], a[3], a[4], a[5], a[6], P676.Mode.APPROX);
                 case "slant_e" -> P676.gaseousAttenuationSlantPath(a[0], a[1], a[2], a[3], a[4], null, null, P676.Mode.EXACT);

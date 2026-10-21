@@ -4,7 +4,7 @@
  * <p>Implemented recommendations (version in force noted in each class):
  * <ul>
  *   <li>{@link org.itur.P618} - ITU-R P.618-13: Earth-space propagation (rain, scintillation, XPD, diversity)</li>
- *   <li>{@link org.itur.P676} - ITU-R P.676-11: attenuation by atmospheric gases</li>
+ *   <li>{@link org.itur.P676} - ITU-R P.676-13: attenuation by atmospheric gases</li>
  *   <li>{@link org.itur.P838} - ITU-R P.838-3: specific attenuation by rain</li>
  *   <li>{@link org.itur.P839} - ITU-R P.839-4: rain height</li>
  *   <li>{@link org.itur.P837} - ITU-R P.837-7: precipitation characteristics</li>
