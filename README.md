@@ -62,6 +62,10 @@ See [docs/VALIDATION.md](docs/VALIDATION.md) for the strategy, the full results 
 - The other recommendations were checked once against the ITU tables: all rows pass except P.837-7 rainfall rate for arbitrary `p` (up to 3.4e-4 relative, same as ITU-Rpy) and P.1510-1 temperature (≤ 1.3e-5 K, float32 storage).
 - The maps are rounded to float32 on both sides so that the same inputs are compared; `ReferenceValuesTest` checks float64 values at 1e-5.
 
+## Performance
+
+A typical total-attenuation computation takes about 13 µs per call and per core (about 4 ms with the ray-traced Annex 1 gas method); the first call in a JVM loads the maps and takes a few milliseconds up to about half a second. See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for the benchmark, the full results and tuning notes.
+
 ## Known differences (inherited from ITU-Rpy)
 
 - `P0` of P.618 is in %.
@@ -78,6 +82,8 @@ mvn test
 ```
 
 Not built with Maven/Java 25 in the development environment (network blocked): validated with javac 21, a hand-assembled jar and a small JUnit stand-in runner. A first `mvn test` on your side is the final check.
+
+Benchmark (not run by `mvn test`): `java -Xmx2g -cp target/classes:target/test-classes org.itur.perf.PerformanceBenchmark [--quick] [--markdown]`.
 
 ## License
 
