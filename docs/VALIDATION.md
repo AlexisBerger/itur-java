@@ -9,10 +9,14 @@ an independent check.
 
 Three layers, from the strictest to the most independent:
 
-1. **Unit tests** (`SpecialTest`, `GridTest`, `ReferenceValuesTest`) check the numerical building
-   blocks (erfc, normal distribution, bisection, bivariate normal tail, bilinear and bicubic
-   interpolation) and a handful of end-to-end values computed with ITU-Rpy on its original float64
-   data. They also check that invalid inputs are rejected.
+1. **Unit tests** check the numerical building blocks (`SpecialTest`, `GridTest`, `GeodesyTest`),
+   each recommendation on its own (`P835Test`, `P838Test`, `P453Test`, `P836Test`, `P837Test`,
+   `P840Test`, `P676Test`, `P618Test`, `MapModelsTest` for P.839/P.1510/P.1511) and the combination
+   (`ItuTest`). They use values that do not come from ITU-Rpy where possible (the table of P.838-3,
+   the US Standard Atmosphere, the WGS-84 ellipsoid) and otherwise physical invariants:
+   monotonic behaviour, limiting cases, identities between functions, longitude conventions.
+   `ReferenceValuesTest` adds a handful of end-to-end values computed with ITU-Rpy on its original
+   float64 data, and the rejection of invalid inputs.
 2. **Golden vectors** compare every public function with ITU-Rpy on a large, fixed set of inputs.
 3. **Official ITU tables** compare the results with the numbers published by the ITU for each
    recommendation.

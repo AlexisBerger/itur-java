@@ -92,6 +92,8 @@ Not built with Maven/Java 25 in the development environment (network blocked): v
 
 Regenerate the documentation figures: `java -cp target/classes tools/DocFigureData.java build/doc-data && python3 tools/plot_doc_figures.py build/doc-data docs/img` (needs matplotlib, pandas).
 
+Coverage: `mvn verify` writes the JaCoCo report to `target/site/jacoco/index.html`.
+
 Benchmark (not run by `mvn test`): `java -Xmx2g -cp target/classes:target/test-classes org.itur.perf.PerformanceBenchmark [--quick] [--markdown]`; ITU-Rpy comparison: `tools/benchmark_itur_rpy.py`.
 
 ## License

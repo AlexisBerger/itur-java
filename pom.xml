@@ -24,6 +24,9 @@
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.13.4</junit.version>
+    <jacoco.version>0.8.14</jacoco.version>
+    <!-- filled in by the JaCoCo agent (prepare-agent) and read by surefire -->
+    <argLine></argLine>
   </properties>
 
   <dependencyManagement>
@@ -65,7 +68,7 @@
         <version>3.5.3</version>
         <configuration>
           <!-- the P.837 maps are large (24 monthly maps + R001 map): leave room for the tests -->
-          <argLine>-Xmx2g</argLine>
+          <argLine>@{argLine} -Xmx2g</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -79,6 +82,27 @@
             </manifestEntries>
           </archive>
         </configuration>
+      </plugin>
+      <plugin>
+        <!-- coverage: mvn verify, report in target/site/jacoco/index.html -->
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
