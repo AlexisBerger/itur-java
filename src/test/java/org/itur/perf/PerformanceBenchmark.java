@@ -23,7 +23,11 @@ import org.itur.models.P840;
  * <p>Run it from the build output:
  * <pre>
  *   java -Xmx2g -cp target/classes:target/test-classes org.itur.perf.PerformanceBenchmark [--quick] [--markdown]
+ *   java -cp target/classes:target/test-classes org.itur.perf.PerformanceBenchmark --dump-inputs points.csv
  * </pre>
+ *
+ * <p>{@code --dump-inputs} writes the 1,024 input points (lat, lon, f, el, ap) used by the
+ * benchmark so that {@code tools/benchmark_itur_rpy.py} can time ITU-Rpy on the same inputs.
  *
  * <p>It reports, in this order:
  * <ol>
@@ -184,6 +188,16 @@ public final class PerformanceBenchmark {
         return calls.sum() / ((System.nanoTime() - start) / 1e9);
     }
 
+    /** Writes the benchmark input points as CSV (header: lat,lon,f,el,ap). */
+    static void dumpInputs(java.nio.file.Path file) throws java.io.IOException {
+        StringBuilder sb = new StringBuilder("lat,lon,f,el,ap\n");
+        for (int i = 0; i < POINTS; i++) {
+            sb.append(LAT[i]).append(',').append(LON[i]).append(',').append(FREQ[i]).append(',')
+                .append(ELEV[i]).append(',').append(AP[i]).append('\n');
+        }
+        java.nio.file.Files.writeString(file, sb.toString());
+    }
+
     static String human(double ns) {
         if (ns >= 1e6) {
             return String.format("%.2f ms", ns / 1e6);
@@ -198,6 +212,11 @@ public final class PerformanceBenchmark {
         List<String> a = Arrays.asList(args);
         boolean quick = a.contains("--quick");
         boolean md = a.contains("--markdown");
+        int dump = a.indexOf("--dump-inputs");
+        if (dump >= 0) {
+            dumpInputs(java.nio.file.Path.of(a.get(dump + 1)));
+            return;
+        }
         long warm = quick ? 100_000_000L : 1_000_000_000L;
         long round = quick ? 50_000_000L : 500_000_000L;
         int rounds = quick ? 3 : 5;

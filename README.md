@@ -64,7 +64,7 @@ See [docs/VALIDATION.md](docs/VALIDATION.md) for the strategy, the full results 
 
 ## Performance
 
-A typical total-attenuation computation takes about 13 µs per call and per core (about 4 ms with the ray-traced Annex 1 gas method); the first call in a JVM loads the maps and takes a few milliseconds up to about half a second. See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for the benchmark, the full results and tuning notes.
+A typical total-attenuation computation takes about 13 µs per call and per core (about 4 ms with the ray-traced Annex 1 gas method); the first call in a JVM loads the maps and takes a few milliseconds up to about half a second. On the same inputs and machine, scalar calls were 28x to about 2,800x faster than ITU-Rpy's, and 5x to 65x faster than its vectorized calls where it accepts arrays (ITU-Rpy ran with stand-ins for astropy, so real ITU-Rpy is slower still). See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for the benchmark, the full results, the caveats and tuning notes.
 
 ## Known differences (inherited from ITU-Rpy)
 
@@ -83,7 +83,7 @@ mvn test
 
 Not built with Maven/Java 25 in the development environment (network blocked): validated with javac 21, a hand-assembled jar and a small JUnit stand-in runner. A first `mvn test` on your side is the final check.
 
-Benchmark (not run by `mvn test`): `java -Xmx2g -cp target/classes:target/test-classes org.itur.perf.PerformanceBenchmark [--quick] [--markdown]`.
+Benchmark (not run by `mvn test`): `java -Xmx2g -cp target/classes:target/test-classes org.itur.perf.PerformanceBenchmark [--quick] [--markdown]`; ITU-Rpy comparison: `tools/benchmark_itur_rpy.py`.
 
 ## License
 
