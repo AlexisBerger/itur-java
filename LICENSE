@@ -1,13 +1,17 @@
 MIT License
 
-Copyright (c) 2026 Alexis Berger
+Copyright (c) 2016 Inigo del Portillo, Massachusetts Institute of Technology (ITU-Rpy)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This library is a Java port derived from ITU-Rpy (https://github.com/inigodelportillo/ITU-Rpy),
+which is distributed under the MIT License reproduced below. The copyright notice of the original
+work is kept as required by that license.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -19,3 +23,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+NOTE ON THE ITU DATA: the digital maps and tables under src/main/resources/itur/data are derived
+from the data products attached to the ITU-R Recommendations (c) ITU. They are redistributed here
+in the same way ITU-Rpy redistributes them; check the ITU terms of use for your own usage.
